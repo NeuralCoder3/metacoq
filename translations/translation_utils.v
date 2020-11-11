@@ -86,10 +86,10 @@ Definition tsl_name tsl_ident n :=
   | nNamed n => nNamed (tsl_ident n)
   end.
 
-
 Definition tmDebug {A} : A -> TemplateMonad unit
+  := print_nf.
   (* := tmPrint. *)
-  := fun _ => ret tt.
+  (* := fun _ => ret tt. *)
 
 
 Definition add_global_decl d (Σ : global_env_ext) : global_env_ext
@@ -112,6 +112,10 @@ Definition monomorph_globref_term (gr : global_reference) : term :=
   end.
 
 
+From MetaCoq.Translations Require Import makeFresh.
+
+
+(* Definition Translate' {tsl : Translation} (ΣE : tsl_context) (id : ident) (make:bool) *)
 Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
   : TemplateMonad tsl_context :=
   tmDebug ("Translate " ^ id);;
@@ -129,7 +133,11 @@ Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
       print_nf e ;;
       fail_nf ("Translation error during the translation of the inductive " ^ id)
     | Success (E, decls) =>
-      monad_iter (fun x => tmDebug x ;; tmMkInductive' x) decls ;;
+      (* monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x) decls ;; *)
+      (* monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x ;; 
+        if make then tmMkInductive' x else ret tt) decls ;; *)
+      monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x ;; tmMkInductive' x ) decls ;;
+      (* monad_iter (fun x => tmDebug x ;; tmMkInductive' x) decls ;; *)
       let Σ' := add_global_decl (kn,InductiveDecl d) (fst ΣE) in
       let E' := (E ++ snd ΣE) in
       Σ' <- tmEval lazy Σ' ;;
@@ -154,7 +162,7 @@ Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
         print_nf e ;;
         fail_nf ("Translation error during the translation of the body of " ^ id)
       | Success t' =>
-        id' <- tmEval all (tsl_id id) ;;
+        id' <- tmFreshName (tsl_id id) ;;
         tmDebug "here" ;;
         tmDebug id' ;;
         tmDebug t' ;;
@@ -173,6 +181,9 @@ Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
     end
   end.
 
+(* Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident) 
+  : TemplateMonad tsl_context :=
+@Translate' tsl ΣE id true. *)
 
 Definition Implement {tsl : Translation} (ΣE : tsl_context)
            (id : ident) (A : Type)
@@ -188,7 +199,7 @@ Definition Implement {tsl : Translation} (ΣE : tsl_context)
     print_nf e ;;
     tmFail "Translation error during the translation of the type."
   | Success tA' =>
-      id' <- tmEval all (tsl_id id) ;;
+      id' <- tmFreshName (tsl_id id) ;;
       tmBind (tmUnquoteTyped Type tA') (fun A' =>
       tmLemma id' A' ;;
       tmAxiom id A ;;
@@ -207,7 +218,7 @@ Definition Implement {tsl : Translation} (ΣE : tsl_context)
 Definition ImplementExisting {tsl : Translation} (ΣE : tsl_context) (id : ident)
   : TemplateMonad tsl_context :=
   gr <- tmLocate1 id ;;
-  id' <- tmEval all (tsl_id id) ;;
+  id' <- tmFreshName (tsl_id id) ;;
   mp <- tmCurrentModPath tt ;;
   match tsl_ty with
   | None => tmFail "No implementation of tsl_ty provided for this translation."
@@ -251,7 +262,7 @@ Definition ImplementExisting {tsl : Translation} (ΣE : tsl_context) (id : ident
         print_nf e ;;
         fail_nf ("Translation error during the translation of the type of " ^ id)
       | Success tA' =>
-        id' <- tmEval all (tsl_id id) ;;
+        id' <- tmFreshName (tsl_id id) ;;
         tmBind (tmUnquoteTyped Type tA') (fun A' =>
         tmLemma id' A' ;;
         gr' <- tmLocate1 id' ;;
@@ -285,7 +296,7 @@ Definition ImplementExisting {tsl : Translation} (ΣE : tsl_context) (id : ident
           fail_nf ("Translation error during the translation of the type of " ^ id)
         | Success tA' =>
           tmDebug "plop6" ;;
-          id' <- tmEval all (tsl_id id) ;;
+          id' <- tmFreshName (tsl_id id) ;;
           tmBind (tmUnquoteTyped Type tA') (fun A' =>
           tmDebug "plop7" ;;
           tmLemma id' A' ;;
@@ -327,7 +338,8 @@ Definition TranslateRec {tsl : Translation} (ΣE : tsl_context) {A} (t : A) :=
                        ^ string_of_kername kn)
           | Success t' =>
             let id := kn.2 in
-            let id' := tsl_ident id in
+            let id'' := tsl_ident id in
+            id' <- tmFreshName id'';;
             tmDebug "here";;
             tmDebug id' ;;
             tmDebug t' ;;

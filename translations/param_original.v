@@ -215,6 +215,12 @@ End Id1.
 Module Id2.
   Definition ID := forall A x y (p : x = y :> A), x = y.
 
+  (* MetaCoq Run (TC <- Translate emptyTC "eq" ;;
+                       tmDefinition "eqTC" TC).
+  MetaCoq Run (TC <- Translate eqTC "ID" ;;
+                       tmDefinition "TC" TC).
+  Print TC. *)
+
   MetaCoq Run (TC <- TranslateRec emptyTC ID ;;
                        tmDefinition "TC" TC).
 
