@@ -283,61 +283,57 @@ Definition ConstructTable {A} (t:A) : TemplateMonad tsl_context :=
     end)
   (fst p) (emptyTC).
 
+(* the cases could be all in one and the command with 
+  distinction on references/other terms could be a Template command
+ *)
+Definition getIdentKername {A} (t:A)  : TemplateMonad kername :=
+  q <- tmQuote t;;
+  tmReturn match q with
+  (* handle all cases in one *)
+  | tInd (mkInd kername _) _
+  | tConst kername _
+  | tConstruct (mkInd kername _) _ _ => 
+    kername
+  | _ => (MPfile [],"") (* dummy value *)
+  end.
 
-(* this should in an ideal implementation be all in one *)
+  (* gets the local identifier (short name) *)
 Definition getIdent {A} (t:A)  : TemplateMonad string :=
-  q <- tmQuote t;;
-  tmReturn match q with
-  (* | tInd (mkInd (_,id) _) _
-  | tConst (_,id) _
-  | tConstruct (mkInd (_,id) _) _ _ => id *)
-  (* needs modpath *)
-  | tInd (mkInd kername _) _
-  | tConst kername _
-  | tConstruct (mkInd kername _) _ _ => 
-    snd kername
-  | _ => ""
-  end.
+  kername <- getIdentKername t;;
+  tmReturn (snd kername).
 
+  (* full mod path and identifier (separated by '.') *)
 Definition getIdentComplete {A} (t:A)  : TemplateMonad string :=
-  q <- tmQuote t;;
-  tmReturn match q with
-  (* | tInd (mkInd (_,id) _) _
-  | tConst (_,id) _
-  | tConstruct (mkInd (_,id) _) _ _ => id *)
-  (* needs modpath *)
-  | tInd (mkInd kername _) _
-  | tConst kername _
-  | tConstruct (mkInd kername _) _ _ => 
-    string_of_kername kername
-  | _ => ""
-  end.
+  kername <- getIdentKername t;;
+  tmReturn (string_of_kername kername).
 
+  (* retrieves a reference from a coq term of a definition *)
+Definition tmLookup {A} (t:A) : TemplateMonad global_reference :=
+  getIdentComplete t >>= tmLocate1.
 
-
+  (* generates a table with all translations possibly needed for lookup *)
 Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
-  (* let tc := emptyTC in *)
-  tc <- ConstructTable t;;
-  id <- getIdentComplete t;; (* does not work for local things *)
+  tc <- ConstructTable t;; (* get table *)
+  id <- getIdentComplete t;;
   idname <- getIdent t;;
-  print_nf idname;;
-  print_nf id;;
-  tc' <- Translate tc id;;
+  tc' <- Translate tc id;; (* translate new definition *)
 
-  gr <- tmLocate1 id;; (* is like translate, but mayb own function using t? *)
+  gr <- tmLookup t;;
   (* extend table *)
   (* TODO: too large only needs new part *)
+  (* easiest way would be to undup (or track what is new) *)
+  (* variant 1: new-old *)
+  (* variant 2: undup in creation *)
+  (* variant 3: tracking *)
       nameString <- tmEval lazy (append idname "_tableLookup");;
-      newName <- tmFreshName nameString;; (* T_inst *)
+      newName <- tmFreshName nameString;;
       tmDefinition newName (
         {|
             content := snd tc';
         |} : translated gr
       );;
-
+  (* save new table for the translation definition t *)
   tmExistingInstance (VarRef newName);;
-  (* print_nf tc';; *)
   tmReturn tc'
-  (* ret tc *)
   .
 
