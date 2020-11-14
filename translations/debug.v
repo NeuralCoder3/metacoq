@@ -1,5 +1,53 @@
 From MetaCoq.Template Require Import utils All.
 
+(* MetaCoq Run (
+  n <- tmLemma "_" nat;;
+  print_nf n
+).
+Next Obligation.
+exact 42.
+Defined. *)
+
+(* Check tmLemma.
+Goal True.
+  run_template_program(
+  n <- tmLemma "_" nat;;
+  tmPrint n
+  ) (fun a => idtac "A"a). *)
+
+  (* Goal True.
+  assert False as H. *)
+
+
+(* Variable (tmLemma' : ident -> forall (A:Type),TemplateMonad A).
+(* or TemplateMonad' *)
+
+Ltac preprocess' p f :=
+  match p with
+  | tmBind na (tmLemma' ?A) ?FQ => 
+    let name := fresh na in
+    let 
+    assert A as name;[|]
+  | ?Q => idtac "basecase: " Q;
+     (* (run_template_program Q f + idtac "Failure at " Q) *)
+     first [run_template_program Q f | idtac "Failure at " Q;fail 100]
+  end.
+
+
+Ltac preprocess p :=
+  let q := eval lazy in p in
+  preprocess' q f. *)
+
+
+
+
+
+
+
+
+
+
+
 Definition testProgram : TemplateMonad unit :=
   tmPrint "Start";;
   (if true then
@@ -77,8 +125,8 @@ Definition test2 : TemplateMonad unit :=
   end. *)
 
 
-Ltac debugger' p f :=
-  match p with
+Ltac debugger' p f g :=
+  lazymatch p with
   | tmBind ?P ?FQ => 
     match type of P with
     TemplateMonad ?A => 
@@ -86,21 +134,41 @@ Ltac debugger' p f :=
     let f a := 
       let Q := constr:(FQ a) in
       let Q' := eval lazy in Q in
-      debugger' Q' f (* does not matter *)
+      debugger' Q' g g
+      (* let b := type of a in
+      idtac "step " b *)
+      (* idtac "step: " Q; *)
+      (* does not matter *)
     in
-    debugger' P f
+    debugger' P f g
     end
   | ?Q => idtac "basecase: " Q;
-     (* (run_template_program Q f + idtac "Failure at " Q) *)
-     first [run_template_program Q f | idtac "Failure at " Q;fail 100]
+     (* run_template_program Q f *)
+  run_template_program Q f
+     (* let g _ := run_template_program Q f in *)
+     (* g tt *)
+     (* let na := fresh "H" in
+      assert A as na;[|f na] *)
+     (* first [g tt | idtac "Failure at " Q;fail 100] *)
   end.
 
 
 Ltac debugger p :=
-  let q := eval lazy in p in
-  let f a := idtac a in
-  debugger' q f.
-  (* (fun (a:unit) => ltac:(idtac)). *)
+  (* let q := eval lazy in p in *)
+  (* let q := eval vm_compute in p in *)
+  (* let q := eval lazy in p in  *)
+  let f v := idtac "Return value: " v in
+  run_template_program (tmEval cbn p) (fun q => debugger' q f f).
+  (* run_template_program (tmEval cbn p) (fun a => idtac a). *)
+  (* let q := eval lazy in p in 
+  q. *)
+  (* let f a := idtac a in
+  debugger' q f. *)
+
+  (* does not work with tmDefinition *)
+
+(* Variable (tmLemma' : ident -> forall (A:Type),TemplateMonad A).
+Compute ltac:(debugger (a <- tmLemma' "H" nat;;tmPrint a)). *)
 
 Ltac lindebugger' p :=
   match p with
