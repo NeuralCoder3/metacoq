@@ -226,15 +226,27 @@ Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
       mapi 
       (
         fun k '((name,typ,nargs)) => 
-        (tsl_ident name,
+        let ctor_type :=
         subst_app 
-          (fold_left_i 
-            (fun t0 i u  => t0 {S i := u}) 
+        (* possibility: add nat -> tRel 0 in table *)
+          ((fold_left_i 
+            (fun t0 i u  => t0 {S i := u})
             (rev (mapi (fun i _ => tInd (mkInd kn i) [])
                               mind.(ind_bodies)))
-            (tsl_rec1 E typ))
-         [tConstruct (mkInd kn i) k []],
-        (2*nargs)%nat) (* todo counting *)
+            (tsl_rec1 E typ)) (* first translate s.t. tRel 0 => tRel 0 ; tRel 1 instead of nat => nat ; nat^t (does not exists) *)
+          )
+          (* (tsl_rec1 E (fold_left_i 
+            (fun t0 i u  => t0 {i := u})
+            (rev (mapi (fun i _ => tInd (mkInd kn i) [])
+                              mind.(ind_bodies)))
+            typ)
+          ) *)
+         [tConstruct (mkInd kn i) k []] in
+
+        (tsl_ident name,
+        ctor_type,
+        (* (2*nargs)%nat) ( * todo counting * ) *)
+        #|fst (decompose_prod_context ctor_type)|)
         (* ,#|transformParams (fst(collect_prods nargs (type)))|) *)
       )
       ind.(ind_ctors)
@@ -248,6 +260,21 @@ Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
       refine (rev (mapi (fun i _ => tInd (mkInd kn i) [])
                               mind.(ind_bodies))). *)
 Defined.
+
+
+MetaCoq Run (tmQuote nat >>= tmPrint).
+MetaCoq Run (tmMsg "-----------------------").
+MetaCoq Run (tmQuoteInductive (MPfile ["Datatypes"; "Init"; "Coq"], "nat") >>= tmPrint).
+MetaCoq Run (tmMsg "-----------------------").
+MetaCoq Run (mi <- tmQuoteInductive (MPfile ["Datatypes"; "Init"; "Coq"], "nat");;
+  mb <- tmEval all (hd mi (snd(tsl_mind_body [] (MPfile ["param_unary"])  (MPfile ["Datatypes"; "Init"; "Coq"], "nat") mi)));;
+  tmPrint mb;;
+  tmMsg "-----------------------";;
+  tmMkInductive' mb
+).
+Print natᵗ.
+	(* Oᵗ : natᵗ 0 | Sᵗ : forall H : nat, natᵗ H -> natᵗ (S H) *)
+
 
 (* Unset Strict Unquote Universe Mode. *)
 MetaCoq Run (typ <- tmQuote (forall A, A -> A) ;;
@@ -462,7 +489,7 @@ Print fᵗ.
 
 
 
-Fail Print natᵗ.
+(* Fail Print natᵗ. *)
 (* Compute ltac:(lindebugger(persistentTranslate nat)). *)
 MetaCoq Run (persistentTranslate nat).
 Print natᵗ.
