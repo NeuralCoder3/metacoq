@@ -38,8 +38,6 @@ Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
     tLambda na A0 (tLambda (tsl_name tsl_ident na)
                            (subst_app (lift0 1 A1) [tRel 0])
                            (tsl_rec1 E t))
-  | t => let t1 :=
-  match t with
   | tRel k => tRel (2 * k)
   | tSort s => tLambda (nNamed "A") (tSort s) (tProd nAnon (tRel 0) (tSort s))
   (* | tSort s => tLambda (nNamed "A") (tSort s) (tProd nAnon (tRel 0) <% Type %>) *)
@@ -105,9 +103,7 @@ Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
   | tProj _ _ => todo "tsl"
   | tFix _ _ | tCoFix _ _ => todo "tsl"
   | tVar _ | tEvar _ _ => todo "tsl"
-  | tLambda _ _ _ => tVar "impossible"
-  end in
-  t1
+  (* | tLambda _ _ _ => tVar "impossible" *)
   end.
   (* match app with Some t' => mkApp t1 (t' {3 := tRel 1} {2 := tRel 0})
                | None => t1 end
