@@ -28,17 +28,16 @@ Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
 
 Print lift0.
 
-Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
-  let tsl_rec1 := tsl_rec1_app None in
+Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
   match t with
   | tLambda na A t =>
     let A0 := tsl_rec0 0 A in
-    let A1 := tsl_rec1_app None E A in
+    let A1 := tsl_rec1 E A in
     tLambda na A0 (tLambda (tsl_name tsl_ident na)
                            (subst_app (lift0 1 A1) [tRel 0])
-                           (tsl_rec1_app (option_map (lift 2 2) app) E t))
+                           (tsl_rec1 E t))
   | t => let t1 :=
   match t with
   | tRel k => tRel (2 * k)
@@ -96,11 +95,11 @@ Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
     let brs' := List.map (on_snd (lift0 1)) brs in
     let case1 := tCase ik (lift0 1 t) (tRel 0) brs' in
     match lookup_tsl_table E (IndRef (fst ik)) with
-    | Some (tInd i _univ) =>
+    (* | Some (tInd i _univ) =>
       tCase (i, (snd ik) * 2)%nat
             (tsl_rec1_app (Some (tsl_rec0 0 case1)) E t)
             (tsl_rec1 E u)
-            (map (on_snd (tsl_rec1 E)) brs)
+            (map (on_snd (tsl_rec1 E)) brs) *)
     | _ => debug "tCase" (match (fst ik) with mkInd s _ => string_of_kername s end)
     end
   | tProj _ _ => todo "tsl"
@@ -108,18 +107,101 @@ Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
   | tVar _ | tEvar _ _ => todo "tsl"
   | tLambda _ _ _ => tVar "impossible"
   end in
-  match app with Some t' => mkApp t1 (t' {3 := tRel 1} {2 := tRel 0})
-               | None => t1 end
+  t1
   end.
-Definition tsl_rec1 := tsl_rec1_app None.
+  (* match app with Some t' => mkApp t1 (t' {3 := tRel 1} {2 := tRel 0})
+               | None => t1 end
+  end. *)
+(* Definition tsl_rec1 := tsl_rec1_app None. *)
+
+MetaCoq Run (tmQuote nat >>= tmPrint).
+MetaCoq Run (tmQuoteInductive (MPfile ["Datatypes"; "Init"; "Coq"], "nat") >>= tmPrint).
+
+Inductive E (X:Type) (h: list X) := .
+MetaCoq Run (tmQuote E >>= tmPrint).
+MetaCoq Run (tmQuoteInductive (MPfile ["param_unary"], "E") >>= tmPrint).
+
+
+Definition plist :=
+[{|
+	           decl_name := nNamed "h";
+               decl_body := None;
+               decl_type := tApp
+                              (tInd
+                                 {|
+                                 inductive_mind := (
+                                                 MPfile
+                                                 ["Datatypes"; "Init"; "Coq"],
+                                                 "list");
+                                 inductive_ind := 0 |} []) [
+                              tRel 0] |};
+              {|
+              decl_name := nNamed "X";
+              decl_body := None;
+              decl_type := tSort
+                             (Universe.from_kernel_repr
+                                (Level.Level "param_unary.1122", false) []) |}].
+
+Print context_decl.
+Check vass.
+
+Fixpoint remove_lambda (t : term) : term :=
+  match t with
+  | tLambda _ _ B => remove_lambda B
+  | _ => t
+  end.
+
+Fixpoint decompose_prod_context (t : term) : context * term :=
+  match t with
+  | tProd n A B => let (Cs, B) := decompose_prod_context B in
+                  (vass n A :: Cs, B)
+  | _ => ([], t)
+  end.
+
+Compute (
+let paramType := it_mkProd_or_LetIn plist <% Type %> in (* does Type always work *)
+    let transformRel := tsl_rec1 [] paramType in
+    let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
+    tl(rev prods)
+    (* transformRel *)
+  ).
+Compute (
+let paramType := it_mkProd_or_LetIn [] <% Type %> in (* does Type always work *)
+    let transformRel := tsl_rec1 [] paramType in
+    let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
+    tl(rev prods)
+    (* rev prods *)
+    (* transformRel *)
+  ).
+
+
+MetaCoq Run (tmQuote le>>= tmPrint).
+From MetaCoq.Template Require Import Pretty.
+(* print_term *)
+MetaCoq Run (tmQuoteInductive (MPfile ["Peano"; "Init"; "Coq"], "le") >>= tmPrint).
+
+Definition transformParams (E:tsl_table) (params:context) : context :=
+    (let paramType := it_mkProd_or_LetIn params <% Type %> in (* does Type always work *)
+    let transformRel := tsl_rec1 E paramType in
+    let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
+    tl (rev prods)).
 
 Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
            (mind : mutual_inductive_body) : tsl_table * list mutual_inductive_body.
-  refine (_, [{| ind_npars := 2 * mind.(ind_npars);
-                 ind_params := _;
+  set(
+    paramlist := transformParams E mind.(ind_params)
+    (* (let paramType := it_mkProd_or_LetIn mind.(ind_params) <% Type %> in (* does Type always work *)
+    let transformRel := tsl_rec1 E paramType in
+    let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
+    tl (rev prods)) *)
+  ).
+  refine (_, [{| ind_npars := #|paramlist|;
+                 ind_params := paramlist;
+  (* refine (_, [{| ind_npars := 2*mind.(ind_npars);
+                 ind_params := mind.(ind_params) ++ mind.(ind_params); *)
                  ind_bodies := _;
                  ind_universes := mind.(ind_universes);
-                 ind_variance := mind.(ind_variance)|}]).  (* FIXME always ok? *)
+                 ind_variance := mind.(ind_variance)|}]).
   - refine (let kn' : kername := (mp, tsl_ident kn.2) in
             fold_left_i (fun E i ind => _ :: _ ++ E) mind.(ind_bodies) []).
     + (* ind *)
@@ -128,8 +210,6 @@ Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
       refine (fold_left_i (fun E k _ => _ :: E) ind.(ind_ctors) []).
       exact (ConstructRef (mkInd kn i) k, tConstruct (mkInd kn' i) k []).
   - exact mind.(ind_finite).
-  - (* params: 2 times the same parameters? Probably wrong *)
-    refine (mind.(ind_params) ++ mind.(ind_params)).
   - refine (mapi _ mind.(ind_bodies)).
     intros i ind.
     refine {| ind_name := tsl_ident ind.(ind_name);
@@ -142,14 +222,31 @@ Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
                                   [tInd (mkInd kn i) []] in
               ar).
     + (* constructors *)
-      refine (mapi _ ind.(ind_ctors)).
+    refine(
+      mapi 
+      (
+        fun k '((name,typ,nargs)) => 
+        (tsl_ident name,
+        subst_app 
+          (fold_left_i 
+            (fun t0 i u  => t0 {S i := u}) 
+            (rev (mapi (fun i _ => tInd (mkInd kn i) [])
+                              mind.(ind_bodies)))
+            (tsl_rec1 E typ))
+         [tConstruct (mkInd kn i) k []],
+        (2*nargs)%nat) (* todo counting *)
+        (* ,#|transformParams (fst(collect_prods nargs (type)))|) *)
+      )
+      ind.(ind_ctors)
+    ).
+      (* refine (mapi _ ind.(ind_ctors)).
       intros k ((name, typ), nargs).
       refine (tsl_ident name, _, 2 * nargs)%nat.
       refine (subst_app _ [tConstruct (mkInd kn i) k []]).
       refine (fold_left_i (fun t0 i u  => t0 {S i := u}) _ (tsl_rec1 E typ)).
       (* [I_n-1; ... I_0] *)
       refine (rev (mapi (fun i _ => tInd (mkInd kn i) [])
-                              mind.(ind_bodies))).
+                              mind.(ind_bodies))). *)
 Defined.
 
 (* Unset Strict Unquote Universe Mode. *)
@@ -166,7 +263,7 @@ Print Translate.
 
 Print string.
 Print Ascii.ascii.
-Search Ascii.ascii.
+(* Search Ascii.ascii. *)
 
 Definition dot : Ascii.ascii.
 set(s:=".").
@@ -361,6 +458,7 @@ MetaCoq Run (tmQuote f >>= tmPrint).  *)
                 tmDefinition "list_TC" TC ). *)
 MetaCoq Run (persistentTranslate f).
 Print fᵗ.
+(* fun f : Type -> Type => forall H : Type, (H -> Type) -> f H -> Type *)
 
 
 
@@ -368,10 +466,16 @@ Fail Print natᵗ.
 (* Compute ltac:(lindebugger(persistentTranslate nat)). *)
 MetaCoq Run (persistentTranslate nat).
 Print natᵗ.
+MetaCoq Run (persistentTranslate nat).
+Print natᵗ0.
 
 MetaCoq Run (persistentTranslate VectorDef.t).
 Print tᵗ.
 
+
+(* Compute ltac:(debugger (persistentTranslate sigT)). *)
+MetaCoq Run (persistentTranslate sigT).
+Print sigTᵗ.
 
 
 
