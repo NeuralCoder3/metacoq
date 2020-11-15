@@ -10,6 +10,8 @@ Definition debug_term msg:= tVar ("debug: " ^ msg).
 
 (* lifts everything after n *)
 (* morally identity *)
+(* TODO: general nested lifting *)
+(* TODO: term mapping on base terms (like tRel) *)
 Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
   match t with
   | tRel k => if n <= k then tRel (2*k-n+1) else t
@@ -27,37 +29,74 @@ Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
   | _ => t
   end.
 
+(* the unary parametricity translation of an object is
+a relation over the objects *)
+(* X_1 is the unary parametricity translation
+where the identifiers are Xᵗ *)
+(*
+types T are translated into relations of objects of type T
+  (using lambas for the objects)
+terms are translated to proofs of the relations
+*)
 Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
   match t with
-  | tLambda na A t =>
-    let A0 := tsl_rec0 0 A in
-    let A1 := tsl_rec1 E A in
-    tLambda na A0 (tLambda (tsl_name tsl_ident na)
-                           (subst_app (lift0 1 A1) [tRel 0])
-                           (tsl_rec1 E t))
-  | tRel k => tRel (2 * k)
-  | tSort s => tLambda (nNamed "A") (tSort s) (tProd nAnon (tRel 0) (tSort s))
-  (* | tSort s => tLambda (nNamed "A") (tSort s) (tProd nAnon (tRel 0) <% Type %>) *)
-
+  (* types *)
+  | tSort s => (* s ⇒ λ (A:s). A → s *)
+  (* s_1: s -> s' and for A:s, s_1 A holds and A_1 : s_1 A *)
+  (* a relation over types A of sort s, the s in the end is the property *)
+    tLambda (nNamed "A") (tSort s) (tProd nAnon (tRel 0) (tSort s))
   | tProd na A B =>
+  (* ∀ (x:A). B ⇒ λ(f:∀(x:A_0,B_0)). ∀(x:A_0) (xᵗ:A_1 x). B_1 (f x) *)
+  (* the translation relates functions A->B 
+    by the relation of their results (B) on related inputs (x) *)
+  (* TODO: code *)
     let A0 := tsl_rec0 0 A in
     let A1 := tsl_rec1 E A in
     let B0 := tsl_rec0 1 B in
     let B1 := tsl_rec1 E B in
-    let ΠAB0 := tProd na A0 B0 in
+    let ΠAB0 := tProd na A0 B0 in (* could & should be infered *)
     tLambda (nNamed "f") ΠAB0
       (tProd na (lift0 1 A0)
              (tProd (tsl_name tsl_ident na)
                     (subst_app (lift0 2 A1) [tRel 0])
                     (subst_app (lift 1 2 B1)
                                [tApp (tRel 2) [tRel 1]])))
+
+  (* values *)
+  | tRel k => (* x ⇒ xᵗ *)
+  (* TODO: code *)
+  (* 
+  Q x, T  -> Q x x^t, T
+  0(x) => 0(x^t)
+
+  Q y z, T -> Q y y^t z z^t, T
+  1(y) => 2(y^t)
+  *)
+    tRel (2 * k)
+  | tLambda na A t => 
+  (* TODO: type of result, code *)
+    (* λ(x:A).t ⇒ λ(x:A_0)(xᵗ:A_1 x). t_1 *)
+
+    (* proof of function A->B is translated to proof 
+      of a relation of B taking related arguments
+    *)
+    let A0 := tsl_rec0 0 A in
+    let A1 := tsl_rec1 E A in
+    tLambda na A0 (tLambda (tsl_name tsl_ident na)
+                           (subst_app (lift0 1 A1) [tRel 0])
+                           (tsl_rec1 E t))
   | tApp t us =>
+  (* t1 t2 ⇒ t1_1 t2_0 t2_1 *)
+  (* for every argument t2 the relation of t1 is supplied with
+   the argument t2 and the relation over t2 *)
+  (* TODO: code *)
     let us' := concat (map (fun v => [tsl_rec0 0 v; tsl_rec1 E v]) us) in
     mkApps (tsl_rec1 E t) us'
 
-  | tLetIn na t A u =>
+  (* | tLetIn na t A u =>
+  (* TODO: documentation, code *)
     let t0 := tsl_rec0 0 t in
     let t1 := tsl_rec1 E t in
     let A0 := tsl_rec0 0 A in
@@ -67,28 +106,41 @@ Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
     tLetIn na t0 A0 (tLetIn (tsl_name tsl_ident na) (lift0 1 t1)
                             (subst_app (lift0 1 A1) [tRel 0]) u1)
 
-  | tCast t c A => let t0 := tsl_rec0 0 t in
-                  let t1 := tsl_rec1 E t in
-                  let A0 := tsl_rec0 0 A in
-                  let A1 := tsl_rec1 E A in
-                  tCast t1 c (mkApps A1 [tCast t0 c A0]) (* apply_subst ? *)
+  | tCast t c A => 
+  (* TODO: documentation, code *)
+    let t0 := tsl_rec0 0 t in
+    let t1 := tsl_rec1 E t in
+    let A0 := tsl_rec0 0 A in
+    let A1 := tsl_rec1 E A in(* apply_subst instead of mkApps? *)
+    tCast t1 c (mkApps A1 [tCast t0 c A0])  *)
+  | tCast _ _ _ | tLetIn _ _ _ _ => todo "tsl"
 
+
+    (* TODO: combine and use 
+        lookupConstant, 
+        constantRef (t:term) {H:isConstant t}, 
+        isConstant *)
   | tConst s univs =>
+  (* TODO: documentation, code *)
     match lookup_tsl_table E (ConstRef s) with
     | Some t => t
     | None => debug "tConst" (string_of_kername s)
     end
   | tInd i univs =>
+  (* TODO: documentation, code *)
     match lookup_tsl_table E (IndRef i) with
     | Some t => t
     | None => debug "tInd" (match i with mkInd s _ => string_of_kername s end)
     end
   | tConstruct i n univs =>
+  (* TODO: documentation, code *)
     match lookup_tsl_table E (ConstructRef i n) with
     | Some t => t
     | None => debug "tConstruct" (match i with mkInd s _ => string_of_kername s end)
     end
+
   | tCase ik t u brs as case =>
+  (* TODO: documentation, code *)
     let brs' := List.map (on_snd (lift0 1)) brs in
     let case1 := tCase ik (lift0 1 t) (tRel 0) brs' in
     match lookup_tsl_table E (IndRef (fst ik)) with
@@ -99,6 +151,7 @@ Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
             (map (on_snd (tsl_rec1 E)) brs) *)
     | _ => debug "tCase" (match (fst ik) with mkInd s _ => string_of_kername s end)
     end
+  (* TODO: documentation, code *)
   | tProj _ _ => todo "tsl"
   | tFix _ _ | tCoFix _ _ => todo "tsl"
   | tVar _ | tEvar _ _ => todo "tsl"
