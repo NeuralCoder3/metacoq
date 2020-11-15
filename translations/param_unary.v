@@ -27,8 +27,6 @@ Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
   | _ => t
   end.
 
-Print lift0.
-
 Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
@@ -104,21 +102,23 @@ Fixpoint tsl_rec1 (E : tsl_table) (t : term) : term :=
   | tProj _ _ => todo "tsl"
   | tFix _ _ | tCoFix _ _ => todo "tsl"
   | tVar _ | tEvar _ _ => todo "tsl"
-  (* | tLambda _ _ _ => tVar "impossible" *)
   end.
-  (* match app with Some t' => mkApp t1 (t' {3 := tRel 1} {2 := tRel 0})
-               | None => t1 end
-  end. *)
-(* Definition tsl_rec1 := tsl_rec1_app None. *)
 
 
 
+
+
+(* deletes lambdas in front of a term *)
+(* ued for product relation function *)
 Fixpoint remove_lambda (t : term) : term :=
   match t with
   | tLambda _ _ B => remove_lambda B
   | _ => t
   end.
 
+(* collect prods into context list and remaining term *)
+(* inverse (up to reversion) of it_mkProd_or_LetIn 
+  (for vass in back direction) *)
 Fixpoint decompose_prod_context (t : term) : context * term :=
   match t with
   | tProd n A B => let (Cs, B) := decompose_prod_context B in
@@ -126,100 +126,104 @@ Fixpoint decompose_prod_context (t : term) : context * term :=
   | _ => ([], t)
   end.
 
-
-
-(* print_term *)
-
+(* translates a parameter list *)
+(* moves parameters as prods in front of Type,
+  translates it,
+  removes first relation lambda, converts back to context (declaration list)
+  and deletes sort translation prod at the end
+*)
+(* the parameters are stored in reverse order,
+but the it_mkProd_or_LetIn uses a reversed list
+in the end a reversion is needed as decompose
+is in correct order *)
 Definition transformParams (E:tsl_table) (params:context) : context :=
-    (let paramType := it_mkProd_or_LetIn params <% Type %> in (* does Type always work *)
+    (let paramType := it_mkProd_or_LetIn params <% Type %> in (* TODO: does Type always work *)
     let transformRel := tsl_rec1 E paramType in
     let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
     tl (rev prods)).
 
+(* translates a mutual inductive definition *)
+(* the translation is constructed in proof mode 
+to follow the structure, keep track of types,
+avoid deep nesting and delay application arguments
+*)
 Definition tsl_mind_body (E : tsl_table) (mp : modpath) (kn : kername)
            (mind : mutual_inductive_body) : tsl_table * list mutual_inductive_body.
-  set(
-    paramlist := transformParams E mind.(ind_params)
-    (* (let paramType := it_mkProd_or_LetIn mind.(ind_params) <% Type %> in (* does Type always work *)
-    let transformRel := tsl_rec1 E paramType in
-    let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
-    tl (rev prods)) *)
-  ).
+  (* computes the new parameters *)
+  (* the unquoting does not care about the parameters but only about the length
+  of ind_params *)
+  (* for a pure unary parametricity translation even
+  mind.(ind_params) ++ mind.(ind_params) workds *)
+ (* the universe of the inductive and the variance are not changed by the translation *)
+  set(paramlist := transformParams E mind.(ind_params)).
   refine (_, [{| ind_npars := #|paramlist|;
                  ind_params := paramlist;
-  (* refine (_, [{| ind_npars := 2*mind.(ind_npars);
-                 ind_params := mind.(ind_params) ++ mind.(ind_params); *)
                  ind_bodies := _;
+                 ind_finite := mind.(ind_finite);
                  ind_universes := mind.(ind_universes);
                  ind_variance := mind.(ind_variance)|}]).
-  - refine (let kn' : kername := (mp, tsl_ident kn.2) in
+  - (* new translations for the one_inductive_bodies in the 
+     mutual inductive definition *)
+    refine (let kn' : kername := (mp, tsl_ident kn.2) in
             fold_left_i (fun E i ind => _ :: _ ++ E) mind.(ind_bodies) []).
-    + (* ind *)
+    (* for each one_inductive ind with index i, add new table *)
+    + (* translation reference of inductive *)
+      (* the new type kn' does not exists yet, but will in future translations *)
       exact (IndRef (mkInd kn i), tInd (mkInd kn' i) []).
-    + (* ctors *)
+    + (* translation references of ctors of ind *)
+    (* create reference for each constructor k *)
       refine (fold_left_i (fun E k _ => _ :: E) ind.(ind_ctors) []).
       exact (ConstructRef (mkInd kn i) k, tConstruct (mkInd kn' i) k []).
-  - exact mind.(ind_finite).
-  - refine (mapi _ mind.(ind_bodies)).
-    intros i ind.
+  - (* translate the one_inductive_bodys individually *)
+    refine (mapi _ mind.(ind_bodies)).
+    intros i ind. (* number of inductive body and body *)
     refine {| ind_name := tsl_ident ind.(ind_name);
               ind_type := _;
               ind_kelim := ind.(ind_kelim);
               ind_ctors := _;
-              ind_projs := [] |}. (* UGLY HACK!!! todo *)
-    + (* arity  *)
-      refine (let ar := subst_app (tsl_rec1 E ind.(ind_type))
-                                  [tInd (mkInd kn i) []] in
-              ar).
+              ind_projs := [] |}. (* TODO: projections *)
+    + (* translate the type (with parameters) of the inductive body *)
+      refine (subst_app (tsl_rec1 E ind.(ind_type))
+                                  [tInd (mkInd kn i) []]).
     + (* constructors *)
+      (* definition as function for better control flow overview *)
     refine(
       mapi 
       (
         fun k '((name,typ,nargs)) => 
         let ctor_type :=
         subst_app 
-        (* possibility: add nat -> tRel 0 in table *)
+        (* possibility: add nat -> tRel 0 in table for 
+          fill-in and then translate *)
           ((fold_left_i 
+            (* fill in implicit tRel for 
+                mutual types and inductive type itself *)
             (fun t0 i u  => t0 {S i := u})
             (rev (mapi (fun i _ => tInd (mkInd kn i) [])
                               mind.(ind_bodies)))
-            (tsl_rec1 E typ)) (* first translate s.t. tRel 0 => tRel 0 ; tRel 1 instead of nat => nat ; nat^t (does not exists) *)
+            (tsl_rec1 E typ)) (* first translate s.t. tRel 0 => tRel 0 ; tRel 1 
+              instead of nat => nat ; nat^t (does not exists) *)
           )
-          (* (tsl_rec1 E (fold_left_i 
-            (fun t0 i u  => t0 {i := u})
-            (rev (mapi (fun i _ => tInd (mkInd kn i) [])
-                              mind.(ind_bodies)))
-            typ)
-          ) *)
-         [tConstruct (mkInd kn i) k []] in
-
-        (tsl_ident name,
-        ctor_type,
-        (* (2*nargs)%nat) ( * todo counting * ) *)
-        #|fst (decompose_prod_context ctor_type)|)
-        (* ,#|transformParams (fst(collect_prods nargs (type)))|) *)
+         [tConstruct (mkInd kn i) k []] 
+         (* place original constructor in generated relation as tRel 0 *) in
+        (tsl_ident name, (* translate constructor name *)
+        ctor_type, (* translated constructor type *)
+        #|fst (decompose_prod_context ctor_type)|) (* all prods are arguments *)
       )
       ind.(ind_ctors)
     ).
-      (* refine (mapi _ ind.(ind_ctors)).
-      intros k ((name, typ), nargs).
-      refine (tsl_ident name, _, 2 * nargs)%nat.
-      refine (subst_app _ [tConstruct (mkInd kn i) k []]).
-      refine (fold_left_i (fun t0 i u  => t0 {S i := u}) _ (tsl_rec1 E typ)).
-      (* [I_n-1; ... I_0] *)
-      refine (rev (mapi (fun i _ => tInd (mkInd kn i) [])
-                              mind.(ind_bodies))). *)
 Defined.
 
 
-
+(* one way to get the dot character '.' *)
 Definition dot : Ascii.ascii.
-set(s:=".").
-assert (s=".")by trivial.
-destruct s;[discriminate H|assumption].
+destruct "." eqn:H;[discriminate|assumption].
 Defined.
 
-(* last part after dot *)
+(* computes last part after dot *)
+(* needed to find identifies of, for example, local definitions *)
+(* definitions and fresh names can not be generated 
+  when a modpath-part with '.' is present *)
 Fixpoint lastPart (id:ident) :=
   match id with
   | EmptyString => (id,false)
@@ -234,6 +238,7 @@ Fixpoint lastPart (id:ident) :=
   
 Definition tsl_ident' id := tsl_ident(fst(lastPart id)).
 
+(* registeres the unary parametricity translations as translation instance *)
 Instance param : Translation :=
   {| tsl_id := tsl_ident' ;
      tsl_tm := fun ΣE t => ret (tsl_rec1 (snd ΣE) t) ;
@@ -242,28 +247,30 @@ Instance param : Translation :=
      tsl_ind := fun ΣE mp kn mind => 
      ret (tsl_mind_body (snd ΣE) mp kn mind) |}.
 
-(* global context not important => use empty_ext [] *)
+
+(* stores translation of definitions *)
+(* global context is not important => always use empty_ext [] *)
 (* better would be the translated global_reference but 
-this is not accessible from the outside *)
+  this is not accessible from the outside *)
 Class translated (ref:global_reference) := 
 {
-  (* content : term  *) (* enough for constant *)
-  content : tsl_table (* needed for inductive *)
-  (* for constants [(ref,contentTerm)] *)
+  (* content : term  *) (* would be enough for constant *)
+  content : tsl_table (* needed for inductive translations *)
+  (* for constants this degenerates to [(ref,contentTerm)] *)
 }.
 
-
+(* lookup a global reference in the translation database and add its
+  translation table to the context *)
 Definition checkTranslation (ΣE:tsl_context) (ref:global_reference) : TemplateMonad tsl_context :=
       match lookup_tsl_table (snd ΣE) ref with
       | Some _ => ret ΣE
       | None => 
+      (* lookup if a translation exists *)
           opt <- tmInferInstance None (translated ref);;
-          match opt with
+          match opt with (* match over custom option type for inference results *)
           | my_Some x => 
             let Σ' := fst ΣE in
-            (* for constants *)
-            (* let E' := (ConstRef kn, @content _ x) :: (snd ΣE) in *)
-            let E' := (@content _ x)  ++ (snd ΣE) in
+            let E' := (@content _ x)  ++ (snd ΣE) in (* TODO: can contain duplicates (see below) *)
             Σ' <- tmEval lazy Σ' ;;
             E' <- tmEval lazy E' ;;
             ret (Σ', E')
@@ -271,7 +278,10 @@ Definition checkTranslation (ΣE:tsl_context) (ref:global_reference) : TemplateM
           end
       end.
 
-(* for additional creation use TranslateRec with constructed table as seed *)
+(* quotes the environment and adds translations of declarations 
+  from it to the context *)
+(* for additional creation of missing translations,
+use TranslateRec with constructed table as seed *)
 Definition ConstructTable {A} (t:A) : TemplateMonad tsl_context :=
   p <- tmQuoteRec t ;;
   tmPrint "~~~~~~~~~~~~~~~~~~" ;;
@@ -297,12 +307,12 @@ Definition getIdentKername {A} (t:A)  : TemplateMonad kername :=
   | _ => (MPfile [],"") (* dummy value *)
   end.
 
-  (* gets the local identifier (short name) *)
+(* gets the local identifier (short name) *)
 Definition getIdent {A} (t:A)  : TemplateMonad string :=
   kername <- getIdentKername t;;
   tmReturn (snd kername).
 
-  (* full mod path and identifier (separated by '.') *)
+(* full mod path and identifier (separated by '.') *)
 Definition getIdentComplete {A} (t:A)  : TemplateMonad string :=
   kername <- getIdentKername t;;
   tmReturn (string_of_kername kername).
@@ -311,7 +321,7 @@ Definition getIdentComplete {A} (t:A)  : TemplateMonad string :=
 Definition tmLookup {A} (t:A) : TemplateMonad global_reference :=
   getIdentComplete t >>= tmLocate1.
 
-  (* generates a table with all translations possibly needed for lookup *)
+(* generates a table with all translations possibly needed for lookup *)
 Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
   tc <- ConstructTable t;; (* get table *)
   id <- getIdentComplete t;;
