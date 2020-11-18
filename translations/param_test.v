@@ -14,8 +14,15 @@ Print natᵗ0.
 MetaCoq Run (persistentTranslate VectorDef.t).
 Print tᵗ.
 
+Print sig.
 MetaCoq Run (persistentTranslate sigT).
 Print sigTᵗ.
+
+(* translation of sorts *)
+Definition type := Type.
+MetaCoq Run (Translate emptyTC "type").
+Print typeᵗ.
+Check (natᵗ:typeᵗ nat).
 
 
 
