@@ -134,14 +134,35 @@ types T are translated into relations of objects of type T
   (using lambas for the objects)
 terms are translated to proofs of the relations
 *)
-Definition up (relTrans:nat->nat) (n:nat) :nat :=
-  pred (relTrans n).
+(* Definition up (relTrans:nat->nat) (n:nat) :nat :=
+  pred (relTrans n). *)
   (* match n with
   1 => O
   | _ => n
   end. *)
+Definition up (rel:nat->nat) (lifting:nat) (from:nat) (n:nat) : nat :=
+  if leb from n then rel (lifting+n) else rel n.
+  (* maybe first rel lookup then logic *)
 
-Fixpoint tsl_rec1' (relTrans: nat -> nat) (E : tsl_table) (t : term) : term :=
+Fixpoint tsl_rec0_2 (rel:nat->nat) (from : nat) (t : term) {struct t} : term :=
+  match t with
+  | tRel k => if from <= k then tRel () else t
+  | tEvar k ts => tEvar k (map (tsl_rec0 n) ts)
+  | tCast t c a => tCast (tsl_rec0 n t) c (tsl_rec0 n a)
+  | tProd na A B => tProd na (tsl_rec0 n A) (tsl_rec0 (n+1) B)
+  | tLambda na A t => tLambda na (tsl_rec0 n A) (tsl_rec0 (n+1) t)
+  | tLetIn na t A u => tLetIn na (tsl_rec0 n t) (tsl_rec0 n A) (tsl_rec0 (n+1) u)
+  | tApp t lu => tApp (tsl_rec0 n t) (map (tsl_rec0 n) lu)
+  | tCase ik t u br => tCase ik (tsl_rec0 n t) (tsl_rec0 n u)
+                            (map (fun x => (fst x, tsl_rec0 n (snd x))) br)
+  | tProj p t => tProj p (tsl_rec0 n t)
+  (* | tFix : mfixpoint term -> nat -> term *)
+  (* | tCoFix : mfixpoint term -> nat -> term *)
+  | _ => t
+  end.
+
+
+Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
   match t with
@@ -159,22 +180,23 @@ Fixpoint tsl_rec1' (relTrans: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* for A^t take relations like A -> lift up to position of A *)
   (* for apply to tRel 0 which is A *)
     (* let A0 := lift0 1 (tsl_rec0' 0 A) in *)
-    let A0 := (tsl_rec0' 0 A) in
-    let A1 := tsl_rec1' relTrans E A in
+    let A0 := (tsl_rec0_2 liftTsl0 A) in
     (* let B0 := lift 1 1 (tsl_rec0' 1 B) in *)
-    let B0 := (tsl_rec0' 1 B) in
-    let B1 := tsl_rec1' (up relTrans) E B in
+    let B0 := (tsl_rec0_2 liftTsl0 B) in
+    (* let A1 := tsl_rec1' (up 0 liftTsl0) liftTsl1 E A in *)
+    let B1 := tsl_rec1' (up 1 1 liftTsl0) liftTsl1 E B in
     let ΠAB0 := tProd na A0 B0 in (* could (maybe) & should be infered *)
     tLambda (nNamed "f") ΠAB0
-      (tProd na (lift0 1 A0)
+      (tProd na (tsl_rec0_2 (up 1 0 liftTsl0) A0)
       (*     x  :  A      *)
                 (* lift over f *)
              (tProd (tsl_name tsl_ident na)
-                    (subst_app (lift0 2 A1) [tRel 0])
+                    (subst_app (tsl_rec1' (up 2 0 liftTsl0) (up 2 0 liftTsl1) E A) [tRel 0])
                     (* xᵗ           Aᵗ           x  *)
                                (* lift over x, f *)
                     (* (subst_app (lift0 0 (lift 1 2 B1)) *)
-                    (subst_app (lift0 1 (lift 1 2 B1))
+                    (subst_app (tsl_rec1' (up 1 0 (up 1 1 liftTsl0)) (up 2 1 liftTsl1) B)
+                    (* (subst_app (lift0 1 (lift 1 2 B1)) *)
                     (* (subst_app (lift0 1 (lift 0 2 B1)) *)
                                 (* lift after x over f and all over x^t *)
                                [tApp (tRel 2) [tRel 1]])))
@@ -206,7 +228,8 @@ Fixpoint tsl_rec1' (relTrans: nat -> nat) (E : tsl_table) (t : term) : term :=
   1(y) => 2(y^t)
   *)
     (* tRel k *)
-    tRel k
+    tRel (liftTsl1 k)
+    (* tRel (pred k) *)
     (* tRel (relTrans k) *)
     (* tRel (2 * k) *)
   | tLambda na A t =>  (* ignore firt *)
