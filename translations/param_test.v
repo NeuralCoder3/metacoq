@@ -6,11 +6,19 @@ MetaCoq Run (persistentTranslate f).
 Print fᵗ.
 (* fun f : Type -> Type => forall H : Type, (H -> Type) -> f H -> Type *)
 
+(* Inductive natᵗ : (fun X : Set => X -> Set) nat :=
+	Oᵗ : natᵗ 0
+  | Sᵗ : (fun f : nat -> nat => forall H : nat, natᵗ H -> natᵗ (f H)) S. *)
+
 MetaCoq Run (persistentTranslate nat).
 Print natᵗ.
 MetaCoq Run (persistentTranslate nat).
 Print natᵗ0.
 
+MetaCoq Run (TC <- Translate emptyTC "nat" ;;
+                tmDefinition "nat_TC" TC ).
+MetaCoq Run (TC <- Translate nat_TC "VectorDef.t" ;;(* needs nat *)
+                tmDefinition "vec_TC" TC ).
 MetaCoq Run (persistentTranslate VectorDef.t).
 Print tᵗ.
 

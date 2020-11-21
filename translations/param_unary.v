@@ -10,6 +10,8 @@ Definition debug_term msg:= tVar ("debug: " ^ msg).
 
 
 
+(* Definition subst_app := mkApps. *)
+  (* Definition todo := tVar. *)
 
 
 (* lifts everything after n *)
@@ -36,7 +38,6 @@ Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
 Definition tsl_rec0' (n : nat) (t : term) : term := t.
 
 
-Definition subst_app := mkApps.
 
 
 Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
@@ -143,9 +144,6 @@ terms are translated to proofs of the relations
 Print lift.
 
 
-Definition up (lifting:nat) (from:nat) (rel:nat->nat) (n:nat) : nat :=
-  if leb from n then rel (lifting+n) else rel n.
-  (* maybe first rel lookup then logic *)
 
 
 (* Fixpoint tsl_rec0_2 (rel:nat->nat) (from : nat) (t : term) {struct t} : term :=
@@ -165,18 +163,27 @@ Definition up (lifting:nat) (from:nat) (rel:nat->nat) (n:nat) : nat :=
   | _ => t
   end. *)
 
-Definition liftUnder (binder:nat) (rel:nat->nat) (n:nat) : nat :=
-  if binder<=n then rel (n-binder) else n.
-  (* liftUnder 1 => (0->0, S n -> n) *)
+Definition Env := nat -> nat.
+Definition EnvUp (E:Env) : Env :=
+  fun n => match n with
+  | O =>  O
+  | S x => S (E x)
+  end.
 
-Fixpoint tsl_rec0_2 (rel:nat->nat) (t : term) {struct t} : term :=
+Definition EnvLift (E:Env) (n:nat) (k:nat) : Env :=
+  fun x => let y := E x in
+  if k<=y then n+y else y.
+
+Definition EnvLift0 E n := EnvLift E n 0.
+
+Fixpoint tsl_rec0_2 (rel:Env) (t : term) {struct t} : term :=
   match t with
   | tRel k => tRel (rel k)
   | tEvar k ts => tEvar k (map (tsl_rec0_2 rel ) ts)
   | tCast t c a => tCast (tsl_rec0_2 rel t) c (tsl_rec0_2 rel a)
-  | tProd na A B => tProd na (tsl_rec0_2 rel A) (tsl_rec0_2 (liftUnder 1 rel) B)
-  | tLambda na A t => tLambda na (tsl_rec0_2 (liftUnder 1 rel) A) (tsl_rec0_2 (liftUnder 1 rel) t)
-  | tLetIn na t A u => tLetIn na (tsl_rec0_2 rel t) (tsl_rec0_2 rel A) (tsl_rec0_2 (liftUnder 1 rel) u)
+  | tProd na A B => tProd na (tsl_rec0_2 rel A) (tsl_rec0_2 (EnvUp rel) B)
+  | tLambda na A t => tLambda na (tsl_rec0_2 (EnvUp rel) A) (tsl_rec0_2 (EnvUp rel) t)
+  | tLetIn na t A u => tLetIn na (tsl_rec0_2 rel t) (tsl_rec0_2 rel A) (tsl_rec0_2 (EnvUp rel) u)
   | tApp t lu => tApp (tsl_rec0_2 rel t) (map (tsl_rec0_2 rel) lu)
   | tCase ik t u br => tCase ik (tsl_rec0_2 rel t) (tsl_rec0_2 rel u)
                             (map (fun x => (fst x, tsl_rec0_2 rel (snd x))) br)
@@ -186,29 +193,42 @@ Fixpoint tsl_rec0_2 (rel:nat->nat) (t : term) {struct t} : term :=
   | _ => t
   end.
 
-
-Goal forall t n k, tsl_rec0_2 (up n k (fun n => n)) t = lift n k t.
+(* Goal forall r n k E, EnvUp (EnvLift E n k) r = EnvLift E n (S k) r.
 Proof.
-  induction t;intros.
-  2-5,7-16: admit.
-  - reflexivity.
-  - cbn. f_equal.
+  induction r;cbn;intros.
+  - unfold EnvLift.
+  induction t using term_forall_list_ind;cbn;
+  try rewrite IHt1;try rewrite IHt2;try easy;intros n0 k E.
+
+Goal forall t n k E, tsl_rec0_2 (EnvLift E n k) t = lift n k (tsl_rec0_2 E t).
+Proof.
+  induction t using term_forall_list_ind;cbn;
+  try rewrite IHt1;try rewrite IHt2;try easy;intros n0 k E.
+  - admit.
+  - f_equal.
     + apply IHt1.
-    + rewrite <- IHt2. clear IHt1 IHt2 t1.
-Abort.
+    + apply IHt2. *)
 
-Goal forall t n k, tsl_rec0_2 (liftUnder 1 (up n k (fun n0 : nat => n0))) t =
-tsl_rec0_2 (up n (S k) (fun n0 : nat => n0)) t.
-  induction t;intros.
-  2-5,7-16: admit.
-  - cbn. f_equal. destruct n.
-    + cbn. reflexivity.
-    + cbn. unfold up.
-  (* - cbn. f_equal.
-      induction t2;cbn;trivial. *)
-Abort.
+(* Goal forall t, tsl_rec0_2 (fun n => n) t = t.
+Proof.
+  induction t using term_forall_list_ind;cbn;
+  try rewrite IHt1;try rewrite IHt2;try easy.
+  - admit.
+  - now rewrite IHt1, IHt2. *)
 
-Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : term :=
+  Compute(EnvUp (EnvLift (fun n => n) 2 0) 1).
+  Compute(EnvLift (EnvUp (fun n => n)) 2 1 1).
+
+(* Goal forall n E, (forall n, E n >= n) -> EnvUp (EnvLift E 2 0) n = EnvLift (EnvUp E) 2 1 n.
+Proof.
+intros n E H.
+  induction n;trivial;cbn.
+  unfold EnvLift, EnvUp.
+  assert(1<=E n) as -> by lia.
+  rewrite <- IHn. *)
+
+
+Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
   match t with
@@ -223,6 +243,24 @@ Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : 
     by the relation of their results (B) on related inputs (x) *)
   (* TODO: code *)
 
+    tLambda (nNamed "f") (tProd na (tsl_rec0_2 Env A) (tsl_rec0_2 (EnvUp Env) B))
+      (tProd na (tsl_rec0_2 (EnvLift0 Env 1) A)
+      (*     x  :  A      *)
+                (* lift over f *)
+             (tProd (tsl_name tsl_ident na)
+                    (subst_app (tsl_rec1' (EnvLift0 Env 2) (EnvLift0 Envt 2) E A) [tRel 0])
+                    (* xᵗ           Aᵗ           x  *)
+                               (* lift over x, f *)
+                    (* (subst_app (lift0 0 (lift 1 2 B1)) *)
+                    (* (subst_app (tsl_rec1' (EnvLift 1 0 (EnvLift 1 1 Env)) (EnvLift 2 1 Envt) E B) *)
+                    (* (subst_app (tsl_rec1' (EnvLift (EnvLift Env 1 1) 1 0) (EnvLift (EnvUp Envt) 2 1) E B) *)
+                    (subst_app (tsl_rec1' (EnvLift (EnvLift (EnvUp Env) 1 1) 1 0) (EnvLift (EnvUp Envt) 2 1) E B)
+                    (* (subst_app (lift0 1 (lift 1 2 B1)) *)
+                    (* (subst_app (lift0 1 (lift 0 2 B1)) *)
+                                (* lift after x over f and all over x^t *)
+                               [tApp (tRel 2) [tRel 1]])))
+
+(* old
   (* for A^t take relations like A -> lift up to position of A *)
   (* for apply to tRel 0 which is A *)
     (* let A0 := lift0 1 (tsl_rec0' 0 A) in *)
@@ -245,7 +283,7 @@ Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : 
                     (* (subst_app (lift0 1 (lift 1 2 B1)) *)
                     (* (subst_app (lift0 1 (lift 0 2 B1)) *)
                                 (* lift after x over f and all over x^t *)
-                               [tApp (tRel 2) [tRel 1]])))
+                               [tApp (tRel 2) [tRel 1]]))) *)
                                (*       f        x *)
 
 
@@ -274,7 +312,8 @@ Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : 
   1(y) => 2(y^t)
   *)
     (* tRel k *)
-    tRel (liftTsl1 k)
+    (* tRel (liftTsl1 k) *)
+    tRel (Envt k)
     (* tRel (pred k) *)
     (* tRel (relTrans k) *)
     (* tRel (2 * k) *)
@@ -357,11 +396,32 @@ Fixpoint tsl_rec1' (liftTsl0 liftTsl1: nat -> nat) (E : tsl_table) (t : term) : 
   (* TODO: documentation, code *)
   | tProj _ _ => todo "tsl"
   | tFix _ _ | tCoFix _ _ => todo "tsl"
-  | tVar _ | tEvar _ _ => todo "tsl"
+  | tVar _ | tEvar _ _ => todo "tsl var"
   end.
 
-Definition tsl_rec1 := tsl_rec1_app None.
+Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  ((tProd (nNamed "y") (tVar "Y") (tRel 0)))
+  ).
+Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  ((tProd (nNamed "y") (tVar "Y") (tRel 1)))
+  ).
+Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  (tProd (nNamed "x") (tRel 0) (tProd (nNamed "y") (tRel 1) (tRel 0)))
+  ).
+Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  (tProd (nNamed "x") (tRel 0) (tProd (nNamed "y") (tRel 1) (tRel 1)))
+  ).
+(* Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  (tProd (nNamed "x") (tVar "X") (tProd (nNamed "y") (tVar "Y") (tRel 0)))
+  ).
+Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
+  (tProd (nNamed "x") (tVar "X") (tProd (nNamed "y") (tVar "Y") (tRel 1)))
+  ). *)
+
+Definition tsl_rec1_org := tsl_rec1_app None.
 (* Definition tsl_rec1 := tsl_rec1'. *)
+
+(* Definition closeTerm () *)
 
 Load de_bruijn_print.
 Definition pretty_print := print_term (empty_ext []) [] true.
@@ -369,12 +429,27 @@ Definition pretty_print := print_term (empty_ext []) [] true.
 (* Definition test := (tRel 0). *)
 (* Problems *)
 (* Definition test := (tProd nAnon (tRel 0) (tRel 1)). *)
-Definition test := <% forall (A:Type), forall (a:A), Type %>.
-(* Definition test := <% forall (T:Type), Type %>. *)
-Definition testᵗ := tsl_rec1' (fun n => n) (fun n => n) [] test.
-Definition testᵗ2 := tsl_rec1 [] test.
+(* Definition test := (tProd nAnon (tVar "None") (tProd nAnon (tVar "None") (tProd nAnon (tRel 0) (tRel 1)))). *)
+(* Definition test := <% forall (A:Type), forall (a:A), Type %>. *)
+Definition test := <% forall (T:Type), Type %>.
+
+Definition idEnv : Env := fun n => n.
+Notation "'if' x 'is' p 'then' A 'else' B" :=
+  (match x with p => A | _ => B end)
+    (at level 200, p pattern,right associativity).
+(* Definition testᵗ := tsl_rec1' idEnv idEnv [] test. *)
+Definition testᵗ := tsl_rec1' 
+  (* (fun n => if n is 0 then 1 else (if n is 1 then 3 else n)) 
+  (fun n => if n is 1 then 2 else n)  *)
+  (fun n => S(2*n))
+  (fun n => 2*n)%nat
+  [] test.
+Definition testᵗ2 := tsl_rec1_org [] test.
 (* Print test.
 Compute testᵗ. *)
+
+(* Compute testᵗ.
+Compute testᵗ2. *)
 
 MetaCoq Run (print_nf test).
 MetaCoq Run (bruijn_print testᵗ).
@@ -383,6 +458,8 @@ MetaCoq Run (bruijn_print testᵗ2).
 Compute (pretty_print (testᵗ)).
 
 
+Definition tsl_rec1 := tsl_rec1' (fun n => S(2*n)) (fun n => 2*n)%nat.
+(* Definition tsl_rec1 := tsl_rec1_org. *)
 
 
 (* deletes lambdas in front of a term *)
@@ -518,7 +595,7 @@ Definition tsl_ident' id := tsl_ident(fst(lastPart id)).
 (* registeres the unary parametricity translations as translation instance *)
 Instance param : Translation :=
   {| tsl_id := tsl_ident' ;
-     tsl_tm := fun ΣE t => ret (tsl_rec1' (snd ΣE) t) ;
+     tsl_tm := fun ΣE t => ret (tsl_rec1 (snd ΣE) t) ;
      (* Implement and Implement Existing cannot be used with this translation *)
      tsl_ty := None ;
      tsl_ind := fun ΣE mp kn mind => 
