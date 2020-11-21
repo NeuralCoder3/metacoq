@@ -316,7 +316,7 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
     (* tRel (relTrans k) *)
     (* tRel (2 * k) *)
   | tLambda na A t =>  (* ignore firt *)
-  (* TODO: type of result, code *)
+  (* TODO: type of result *)
     (* λ(x:A).t ⇒ λ(x:A_0)(xᵗ:A_1 x). t_1 *)
 
     (* proof of function A->B is translated to proof 
@@ -327,7 +327,7 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
       (tLambda (tsl_name tsl_ident na)
                (subst_app (tsl_rec1' (EnvLift0 Env 1) (EnvLift0 Envt 1) E A) [tRel 0])
                            (* (tsl_rec1' (EnvLift0 1 Env) (EnvLift 1 1 Envt)  E t)) *)
-                           (tsl_rec1' (EnvLift0 (EnvUp Env) 1) (EnvLift (EnvUp Envt) 1 1)  E t))
+                           (tsl_rec1' (EnvLift (EnvUp Env) 1 0) (EnvLift (EnvUp Envt) 1 1)  E t))
     (* let A0 := tsl_rec0' 0 A in
     let A1 := tsl_rec1' relTrans E A in
     tLambda na A0 (tLambda (tsl_name tsl_ident na)
@@ -343,25 +343,34 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
     (* let us' := concat (map (fun v => [tsl_rec0' 0 v; tsl_rec1' relTrans E v]) us) in
     mkApps (tsl_rec1' relTrans E t) us' *)
 
-  (* | tLetIn na t A u =>
-  (* TODO: documentation, code *)
-    let t0 := tsl_rec0 0 t in
+  | tLetIn na t A u =>
+  (* TODO: documentation *)
+    tLetIn na (tsl_rec0_2 Env t) (tsl_rec0_2 Env A) 
+    (tLetIn (tsl_name tsl_ident na) 
+          (tsl_rec1' (EnvLift0 Env 1) (EnvLift0 Envt 1) E t)
+          (subst_app (tsl_rec1' (EnvLift0 Env 1) (EnvLift0 Envt 1) E A) [tRel 0]) 
+          (tsl_rec1' (EnvLift (EnvUp Env) 1 0) (EnvLift (EnvUp Envt) 1 1)  E u))
+
+    (* let t0 := tsl_rec0 0 t in
     let t1 := tsl_rec1 E t in
     let A0 := tsl_rec0 0 A in
     let A1 := tsl_rec1 E A in
     let u0 := tsl_rec0 0 u in
     let u1 := tsl_rec1 E u in
     tLetIn na t0 A0 (tLetIn (tsl_name tsl_ident na) (lift0 1 t1)
-                            (subst_app (lift0 1 A1) [tRel 0]) u1)
+                            (subst_app (lift0 1 A1) [tRel 0]) u1) *)
 
   | tCast t c A => 
-  (* TODO: documentation, code *)
-    let t0 := tsl_rec0 0 t in
+  (* TODO: documentation *)
+  tCast (tsl_rec1' Env Envt E t) c 
+    (mkApps (tsl_rec1' Env Envt E A) 
+      [tCast (tsl_rec0_2 Env t) c (tsl_rec0_2 Env A)])
+    (* let t0 := tsl_rec0 0 t in
     let t1 := tsl_rec1 E t in
     let A0 := tsl_rec0 0 A in
     let A1 := tsl_rec1 E A in(* apply_subst instead of mkApps? *)
     tCast t1 c (mkApps A1 [tCast t0 c A0])  *)
-  | tCast _ _ _ | tLetIn _ _ _ _ => todo "tsl"
+  (* | tCast _ _ _ | tLetIn _ _ _ _ => todo "tsl" *)
 
 
     (* TODO: combine and use 
@@ -441,9 +450,9 @@ Definition pretty_print := print_term (empty_ext []) [] true.
 (* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => P Q %>. *)
 (* Definition test := <% fun (P:Type) => forall (p:P), P %>. *)
 (* Definition test := <% fun (P:Type) => forall (p:P) (q:P), P %>. *)
-
+(* Definition test := <% fun (P:Type) (Q:Type) => forall (p:P), P %>. *)
 (* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => forall (X:P Q), forall (q:Q), P Q %>. *)
-Definition test := <% fun (P:Type) (Q:Type) => forall (p:P), P %>.
+Definition test := <% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>.
 
 Definition idEnv : Env := fun n => n.
 Notation "'if' x 'is' p 'then' A 'else' B" :=
