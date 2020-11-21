@@ -241,7 +241,6 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* ∀ (x:A). B ⇒ λ(f:∀(x:A_0,B_0)). ∀(x:A_0) (xᵗ:A_1 x). B_1 (f x) *)
   (* the translation relates functions A->B 
     by the relation of their results (B) on related inputs (x) *)
-  (* TODO: code *)
 
     tLambda (nNamed "f") (tProd na (tsl_rec0_2 Env A) (tsl_rec0_2 (EnvUp Env) B))
       (tProd na (tsl_rec0_2 (EnvLift0 Env 1) A)
@@ -303,7 +302,6 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* | tRel (S k) => (* x ⇒ xᵗ *)
     tRel k *)
   | tRel k => (* x ⇒ xᵗ *)
-  (* TODO: code *)
   (* TODO: maybe wrong
   Q x, T  -> Q x x^t, T
   0(x) => 0(x^t)
@@ -324,7 +322,12 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
     (* proof of function A->B is translated to proof 
       of a relation of B taking related arguments
     *)
-    todo "tsl lam"
+    (* todo "tsl lam" *)
+    tLambda na (tsl_rec0_2 Env A) 
+      (tLambda (tsl_name tsl_ident na)
+               (subst_app (tsl_rec1' (EnvLift0 Env 1) (EnvLift0 Envt 1) E A) [tRel 0])
+                           (* (tsl_rec1' (EnvLift0 1 Env) (EnvLift 1 1 Envt)  E t)) *)
+                           (tsl_rec1' (EnvLift0 (EnvUp Env) 1) (EnvLift (EnvUp Envt) 1 1)  E t))
     (* let A0 := tsl_rec0' 0 A in
     let A1 := tsl_rec1' relTrans E A in
     tLambda na A0 (tLambda (tsl_name tsl_ident na)
@@ -334,8 +337,9 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* t1 t2 ⇒ t1_1 t2_0 t2_1 *)
   (* for every argument t2 the relation of t1 is supplied with
    the argument t2 and the relation over t2 *)
-  (* TODO: code *)
-    todo "tsl tApp"
+    (* todo "tsl tApp" *)
+    let us' := concat (map (fun v => [tsl_rec0_2 Env v; tsl_rec1' Env Envt E v]) us) in
+    mkApps (tsl_rec1' Env Envt E t) us'
     (* let us' := concat (map (fun v => [tsl_rec0' 0 v; tsl_rec1' relTrans E v]) us) in
     mkApps (tsl_rec1' relTrans E t) us' *)
 
@@ -398,7 +402,7 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   | tFix _ _ | tCoFix _ _ => todo "tsl"
   | tVar _ | tEvar _ _ => todo "tsl var"
   end.
-
+(* Tests for manual prod lifting
 Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
   ((tProd (nNamed "y") (tVar "Y") (tRel 0)))
   ).
@@ -411,6 +415,8 @@ Compute (tsl_rec1' (fun n => n) (fun n => n) []
 Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
   (tProd (nNamed "x") (tRel 0) (tProd (nNamed "y") (tRel 1) (tRel 1)))
   ).
+*)
+
 (* Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
   (tProd (nNamed "x") (tVar "X") (tProd (nNamed "y") (tVar "Y") (tRel 0)))
   ).
@@ -431,7 +437,13 @@ Definition pretty_print := print_term (empty_ext []) [] true.
 (* Definition test := (tProd nAnon (tRel 0) (tRel 1)). *)
 (* Definition test := (tProd nAnon (tVar "None") (tProd nAnon (tVar "None") (tProd nAnon (tRel 0) (tRel 1)))). *)
 (* Definition test := <% forall (A:Type), forall (a:A), Type %>. *)
-Definition test := <% forall (T:Type), Type %>.
+(* Definition test := <% forall (T:Type), Type %>. *)
+(* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => P Q %>. *)
+(* Definition test := <% fun (P:Type) => forall (p:P), P %>. *)
+(* Definition test := <% fun (P:Type) => forall (p:P) (q:P), P %>. *)
+
+(* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => forall (X:P Q), forall (q:Q), P Q %>. *)
+Definition test := <% fun (P:Type) (Q:Type) => forall (p:P), P %>.
 
 Definition idEnv : Env := fun n => n.
 Notation "'if' x 'is' p 'then' A 'else' B" :=

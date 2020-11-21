@@ -20,6 +20,7 @@ MetaCoq Run (TC <- Translate emptyTC "nat" ;;
 MetaCoq Run (TC <- Translate nat_TC "VectorDef.t" ;;(* needs nat *)
                 tmDefinition "vec_TC" TC ).
 MetaCoq Run (persistentTranslate VectorDef.t).
+Print VectorDef.t.
 Print tᵗ.
 
 Print sig.
