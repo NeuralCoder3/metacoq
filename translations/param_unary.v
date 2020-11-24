@@ -482,6 +482,13 @@ Compute (pretty_print (testᵗ)).
 Definition tsl_rec1 := tsl_rec1' (fun n => S(2*n)) (fun n => 2*n)%nat.
 (* Definition tsl_rec1 := tsl_rec1_org. *)
 
+(* theoretic statement needs many lemmas and strengthening
+Goal forall t E, tsl_rec1 E t = tsl_rec1_org E t.
+Proof.
+  intros t;
+  induction t using term_forall_list_ind;cbn;
+  try rewrite IHt1;try rewrite IHt2;try easy. *)
+
 
 (* deletes lambdas in front of a term *)
 (* ued for product relation function *)
@@ -671,9 +678,8 @@ Definition ConstructTable {A} (t:A) : TemplateMonad tsl_context :=
 (* the cases could be all in one and the command with 
   distinction on references/other terms could be a Template command
  *)
-Definition getIdentKername {A} (t:A)  : TemplateMonad kername :=
-  q <- tmQuote t;;
-  tmReturn match q with
+Definition getIdentKername' (t:term)  : TemplateMonad kername :=
+  tmReturn match t with
   (* handle all cases in one *)
   | tInd (mkInd kername _) _
   | tConst kername _
@@ -681,6 +687,9 @@ Definition getIdentKername {A} (t:A)  : TemplateMonad kername :=
     kername
   | _ => (MPfile [],"") (* dummy value *)
   end.
+Definition getIdentKername {A} (t:A)  : TemplateMonad kername :=
+  q <- tmQuote t;;
+  getIdentKername' (if q is tApp q' _ then q' else q).
 
 (* gets the local identifier (short name) *)
 Definition getIdent {A} (t:A)  : TemplateMonad string :=
@@ -701,6 +710,8 @@ Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
   tc <- ConstructTable t;; (* get table *)
   id <- getIdentComplete t;;
   idname <- getIdent t;;
+  tmMsg ("Complete Identifier: "^id);;
+  tmMsg ("Short Identifier: "^idname);;
   tc' <- Translate tc id;; (* translate new definition *)
 
   gr <- tmLookup t;;

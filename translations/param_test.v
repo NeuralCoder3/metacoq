@@ -27,6 +27,14 @@ Print sig.
 MetaCoq Run (persistentTranslate sigT).
 Print sigTᵗ.
 
+Print list.
+MetaCoq Run (persistentTranslate list).
+Print listᵗ.
+
+(* Print All2. *)
+(* universe error *)
+(* MetaCoq Run (persistentTranslate All2). *)
+
 (* translation of sorts *)
 Definition type := Type.
 MetaCoq Run (Translate emptyTC "type").
