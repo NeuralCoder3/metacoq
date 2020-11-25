@@ -229,6 +229,9 @@ intros n E H.
 
 From MetaCoq Require Import Checker.
 (* Check eq_term. *)
+Existing Instance config.default_checker_flags.
+
+
 
 Fixpoint isAugmentable (t:term) := 
   match t with 
@@ -240,7 +243,27 @@ Fixpoint isAugmentable (t:term) :=
   (* Definition deleteNonTypes:=true. *)
   Definition deleteNonTypes:=false.
 
-  Existing Instance config.default_checker_flags.
+Inductive isConstant : term -> Type :=
+| constIsConstant s univs: isConstant (tConst s univs)
+| indIsConstant i univs: isConstant (tInd i univs)
+| constructIsConstant i n univs: isConstant (tConstruct i n univs).
+Hint Constructors isConstant.
+
+Definition getRef (t:term) {h:isConstant t} : global_reference.
+inversion h.
+- exact (ConstRef s).
+- exact (IndRef i).
+- exact (ConstructRef i n).
+Defined.
+
+Definition getKername (t:term) {h:isConstant t} : kername.
+inversion h.
+- exact s.
+- destruct i. exact (inductive_mind).
+- destruct i. exact (inductive_mind).
+Defined.
+
+
 
 Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
@@ -402,11 +425,15 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* | tCast _ _ _ | tLetIn _ _ _ _ => todo "tsl" *)
 
 
-    (* TODO: combine and use 
-        lookupConstant, 
-        constantRef (t:term) {H:isConstant t}, 
-        isConstant *)
   (* all three constants are translated by a lookup in the table *)
+  (* | (tConst _ _ as q)
+  | (tInd _ _ as q)
+  | (tConstruct _ _ _ as q) =>
+    match lookup_tsl_table E (@getRef q _) with
+    | Some t => t
+    | None => debug "tConst" (string_of_kername (@getKername q _))
+    end *)
+    
   | tConst s univs =>
     match lookup_tsl_table E (ConstRef s) with
     | Some t => t
@@ -765,3 +792,23 @@ Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
   tmReturn tc'
   .
 
+
+
+(* lemmas about env vs lift *)
+
+(* Goal forall t E, tsl_rec1 E t = tsl_rec1_org E t.
+Proof.
+  unfold tsl_rec1, tsl_rec1_org.
+  (* generalize tsl_rec1' Env Envt *)
+  intros t; induction t eqn: H using term_forall_list_ind;cbn;eauto;intros.
+  (* all: cbn in *. *)
+    - admit. (* Naming *)
+    - admit. (* Naming *)
+    - admit. (* Naming *)
+  - admit. (* cast *)
+  - admit. (* prod *)
+  - admit. (* lambda *)
+  - admit. (* letin *)
+  - admit. (* app *)
+    - admit. (* case *)
+Abort. *)
