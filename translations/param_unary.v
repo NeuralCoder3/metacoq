@@ -227,6 +227,20 @@ intros n E H.
   assert(1<=E n) as -> by lia.
   rewrite <- IHn. *)
 
+From MetaCoq Require Import Checker.
+(* Check eq_term. *)
+
+Fixpoint isAugmentable (t:term) := 
+  match t with 
+  | tRel _ | tSort _ => true
+  | tProd _ _ t2 => isAugmentable t2
+  | _ => false
+  end.
+
+  (* Definition deleteNonTypes:=true. *)
+  Definition deleteNonTypes:=false.
+
+  Existing Instance config.default_checker_flags.
 
 Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
@@ -241,11 +255,13 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* ∀ (x:A). B ⇒ λ(f:∀(x:A_0,B_0)). ∀(x:A_0) (xᵗ:A_1 x). B_1 (f x) *)
   (* the translation relates functions A->B 
     by the relation of their results (B) on related inputs (x) *)
+    let generate := isAugmentable A || (negb deleteNonTypes) in
 
     tLambda (nNamed "f") (tProd na (tsl_rec0_2 Env A) (tsl_rec0_2 (EnvUp Env) B))
       (tProd na (tsl_rec0_2 (EnvLift0 Env 1) A)
       (*     x  :  A      *)
                 (* lift over f *)
+          (if generate then
              (tProd (tsl_name tsl_ident na)
                     (subst_app (tsl_rec1' (EnvLift0 Env 2) (EnvLift0 Envt 2) E A) [tRel 0])
                     (* xᵗ           Aᵗ           x  *)
@@ -257,7 +273,12 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
                     (* (subst_app (lift0 1 (lift 1 2 B1)) *)
                     (* (subst_app (lift0 1 (lift 0 2 B1)) *)
                                 (* lift after x over f and all over x^t *)
-                               [tApp (tRel 2) [tRel 1]])))
+                               [tApp (tRel 2) [tRel 1]]))
+          else
+            (subst_app 
+              (tsl_rec1' (EnvLift (EnvUp Env) 1 1) (EnvLift (EnvUp Envt) 1 1) E B)
+              [tApp (tRel 1) [tRel 0]]))
+      )
 
 (* old
   (* for A^t take relations like A -> lift up to position of A *)
@@ -322,6 +343,7 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
     (* proof of function A->B is translated to proof 
       of a relation of B taking related arguments
     *)
+    (* TODO: ignored generate for now *)
     (* todo "tsl lam" *)
     tLambda na (tsl_rec0_2 Env A) 
       (tLambda (tsl_name tsl_ident na)
@@ -338,13 +360,19 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   (* for every argument t2 the relation of t1 is supplied with
    the argument t2 and the relation over t2 *)
     (* todo "tsl tApp" *)
-    let us' := concat (map (fun v => [tsl_rec0_2 Env v; tsl_rec1' Env Envt E v]) us) in
+
+    let us' := concat (map (fun v => 
+      let arg := tsl_rec0_2 Env v in
+      let argt :=  tsl_rec1' Env Envt E v in
+      if eq_term init_graph arg argt && deleteNonTypes then [arg] else 
+      [arg;argt]) us) in
     mkApps (tsl_rec1' Env Envt E t) us'
     (* let us' := concat (map (fun v => [tsl_rec0' 0 v; tsl_rec1' relTrans E v]) us) in
     mkApps (tsl_rec1' relTrans E t) us' *)
 
   | tLetIn na t A u =>
   (* TODO: documentation *)
+    (* TODO: ignored generate for now *)
     tLetIn na (tsl_rec0_2 Env t) (tsl_rec0_2 Env A) 
     (tLetIn (tsl_name tsl_ident na) 
           (tsl_rec1' (EnvLift0 Env 1) (EnvLift0 Envt 1) E t)
@@ -362,6 +390,7 @@ Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
 
   | tCast t c A => 
   (* TODO: documentation *)
+    (* TODO: ignored generate for now *)
   tCast (tsl_rec1' Env Envt E t) c 
     (mkApps (tsl_rec1' Env Envt E A) 
       [tCast (tsl_rec0_2 Env t) c (tsl_rec0_2 Env A)])
@@ -446,13 +475,14 @@ Definition pretty_print := print_term (empty_ext []) [] true.
 (* Definition test := (tProd nAnon (tRel 0) (tRel 1)). *)
 (* Definition test := (tProd nAnon (tVar "None") (tProd nAnon (tVar "None") (tProd nAnon (tRel 0) (tRel 1)))). *)
 (* Definition test := <% forall (A:Type), forall (a:A), Type %>. *)
+Definition test := <% forall (A:Type), forall (a:nat), Type %>.
 (* Definition test := <% forall (T:Type), Type %>. *)
 (* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => P Q %>. *)
 (* Definition test := <% fun (P:Type) => forall (p:P), P %>. *)
 (* Definition test := <% fun (P:Type) => forall (p:P) (q:P), P %>. *)
 (* Definition test := <% fun (P:Type) (Q:Type) => forall (p:P), P %>. *)
 (* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => forall (X:P Q), forall (q:Q), P Q %>. *)
-Definition test := <% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>.
+(* Definition test := <% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>. *)
 
 Definition idEnv : Env := fun n => n.
 Notation "'if' x 'is' p 'then' A 'else' B" :=
@@ -473,12 +503,14 @@ Compute testᵗ. *)
 Compute testᵗ2. *)
 
 MetaCoq Run (print_nf test).
+MetaCoq Run (bruijn_print test).
 MetaCoq Run (bruijn_print testᵗ).
 MetaCoq Run (bruijn_print testᵗ2).
 
 Compute (pretty_print (testᵗ)).
 
 
+(* Definition tsl_rec1 := if (tsl_rec1' (fun n => S(2*n)) (fun n => 2*n)%nat) is Some x then x else tVar "Error". *)
 Definition tsl_rec1 := tsl_rec1' (fun n => S(2*n)) (fun n => 2*n)%nat.
 (* Definition tsl_rec1 := tsl_rec1_org. *)
 
