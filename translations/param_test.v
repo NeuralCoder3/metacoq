@@ -1,5 +1,7 @@
 Load param_unary.
 
+(* MetaCoq Run (TC <- Translate emptyTC "VectorDef.t" ;;(* needs nat *)
+                tmDefinition "vec_TC" TC ). *)
 
 Definition f := Type -> Type.
 MetaCoq Run (persistentTranslate f).
@@ -22,6 +24,13 @@ MetaCoq Run (TC <- Translate nat_TC "VectorDef.t" ;;(* needs nat *)
 MetaCoq Run (persistentTranslate VectorDef.t).
 Print VectorDef.t.
 Print tᵗ.
+
+Existing Instance param_prune.
+
+MetaCoq Run (persistentTranslate VectorDef.t).
+Print tᵗ.
+Print tᵗ0.
+Print tᵗ1.
 
 Print sig.
 MetaCoq Run (persistentTranslate sigT).

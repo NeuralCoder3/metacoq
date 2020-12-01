@@ -239,6 +239,7 @@ Fixpoint isAugmentable (t:term) :=
   match t with 
   | tRel _ | tSort _ => true
   | tProd _ _ t2 => isAugmentable t2
+  | tApp t1 _ => isAugmentable t1
   | _ => false
   end.
 
@@ -265,6 +266,11 @@ inversion h.
 - destruct i. exact (inductive_mind).
 Defined.
 
+Definition isConstantBool (t:term) : bool :=
+match t with 
+| tConst _ _ | tInd _ _ | tConstruct _ _ _ => true
+| _ => false
+end.
 
 
 Fixpoint tsl_rec1' (deleteNonTypes:bool) (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
@@ -389,7 +395,7 @@ Fixpoint tsl_rec1' (deleteNonTypes:bool) (Env Envt: nat -> nat) (E : tsl_table) 
     let us' := concat (map (fun v => 
       let arg := tsl_rec0_2 Env v in
       let argt :=  tsl_rec1' deleteNonTypes Env Envt E v in
-      if eq_term init_graph arg argt && deleteNonTypes then [arg] else 
+      if (eq_term init_graph arg argt || negb(isAugmentable arg)) && deleteNonTypes then [arg] else  (* not S -> S^t (but maybe nested?) *)
       [arg;argt]) us) in
     mkApps (tsl_rec1' deleteNonTypes Env Envt E t) us'
     (* let us' := concat (map (fun v => [tsl_rec0' 0 v; tsl_rec1' deleteNonTypes relTrans E v]) us) in
@@ -504,7 +510,8 @@ Definition pretty_print := print_term (empty_ext []) [] true.
 (* Definition test := (tProd nAnon (tRel 0) (tRel 1)). *)
 (* Definition test := (tProd nAnon (tVar "None") (tProd nAnon (tVar "None") (tProd nAnon (tRel 0) (tRel 1)))). *)
 (* Definition test := <% forall (A:Type), forall (a:A), Type %>. *)
-Definition test := <% forall (A:Type), forall (a:nat), Type %>.
+(* Definition test := <% forall (A:Type), forall (a:nat), Type %>. *)
+Definition test := <% forall (f:nat -> Type) (n:nat), f n %>.
 (* Definition test := <% forall (T:Type), Type %>. *)
 (* Definition test := <% fun (P:Type->Type) => fun (Q:Type) => P Q %>. *)
 (* Definition test := <% fun (P:Type) => forall (p:P), P %>. *)
@@ -525,6 +532,11 @@ Definition testᵗ := tsl_rec1'
   (fun n => S(2*n))
   (fun n => 2*n)%nat
   [] test.
+Definition testᵗp := tsl_rec1' 
+  true
+  (fun n => S(2*n))
+  (fun n => 2*n)%nat
+  [] test.
 Definition testᵗ2 := tsl_rec1_org [] test.
 (* Print test.
 Compute testᵗ. *)
@@ -536,6 +548,7 @@ MetaCoq Run (print_nf test).
 MetaCoq Run (bruijn_print test).
 MetaCoq Run (bruijn_print testᵗ).
 MetaCoq Run (bruijn_print testᵗ2).
+MetaCoq Run (bruijn_print testᵗp).
 
 Compute (pretty_print (testᵗ)).
 
@@ -777,13 +790,14 @@ Definition tmLookup {A} (t:A) : TemplateMonad global_reference :=
   getIdentComplete t >>= tmLocate1.
 
 (* generates a table with all translations possibly needed for lookup *)
-Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
+Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_context :=
   tc <- ConstructTable t;; (* get table *)
   id <- getIdentComplete t;;
   idname <- getIdent t;;
   tmMsg ("Complete Identifier: "^id);;
   tmMsg ("Short Identifier: "^idname);;
-  tc' <- Translate tc id;; (* translate new definition *)
+  tc' <- (if prune then Translate else Translate) tc id;; (* translate new definition *)
+  (* TODO: *)
 
   gr <- tmLookup t;;
   (* extend table *)
