@@ -31,6 +31,10 @@ Print list.
 MetaCoq Run (persistentTranslate list).
 Print listᵗ.
 
+Inductive G X := C (f:nat -> X).
+MetaCoq Run (persistentTranslate G).
+Print Gᵗ.
+
 (* Print All2. *)
 (* universe error *)
 (* MetaCoq Run (persistentTranslate All2). *)
