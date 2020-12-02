@@ -160,19 +160,19 @@ Ltac testTerms xs :=
     end.
 
 Compute (ltac:(testTerms [
-(tRel 0);
-(tProd nAnon (tRel 0) (tRel 1));
+(tRel 0); (* test base term *)
+(tProd nAnon (tRel 0) (tRel 1)); (* translation outside the scope *)
 (* (tProd nAnon (tVar "None") (tProd nAnon (tVar "None") (tProd nAnon (tRel 0) (tRel 1)))); *) (* todo tsl is not printable *)
-<% forall (A:Type), forall (a:A), Type %>;
-<% forall (A:Type), forall (a:nat), Type %>;
-<% forall (f:nat -> Type) (n:nat), f n %>;
-<% forall (T:Type), Type %>;
-<% fun (P:Type->Type) => fun (Q:Type) => P Q %>;
-<% fun (P:Type) => forall (p:P), P %>;
-<% fun (P:Type) => forall (p:P) (q:P), P %>;
-<% fun (P:Type) (Q:Type) => forall (p:P), P %>;
-<% fun (P:Type->Type) => fun (Q:Type) => forall (X:P Q), forall (q:Q), P Q %>;
-<% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>;
+<% forall (A:Type), forall (a:A), Type %>; (* dependent prods and type translation application *)
+<% forall (A:Type), forall (a:nat), Type %>; (* prod with constants *)
+<% forall (f:nat -> Type) (n:nat), f n %>; (* application and body translation *)
+<% forall (T:Type), Type %>; (* type translation *)
+<% fun (P:Type->Type) => fun (Q:Type) => P Q %>; (* lambda with applications *)
+<% fun (P:Type) => forall (p:P), P %>; (* access of outer binder *)
+<% fun (P:Type) => forall (p:P) (q:P), P %>; (* multiple arguments *)
+<% fun (P:Type) (Q:Type) => forall (p:P), P %>; (* multiple lambdas *)
+<% fun (P:Type->Type) => fun (Q:Type) => forall (X:P Q), forall (q:Q), P Q %>; (* application and interleaved binder *)
+<% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>; (* complex let in test *)
 <% Type %>
 ])).
 

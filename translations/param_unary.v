@@ -82,7 +82,9 @@ Fixpoint isAugmentable (t:term) :=
   match t with 
   | tRel _ | tSort _ => true
   | tProd _ _ t2 => isAugmentable t2
-  | tApp t1 _ => isAugmentable t1
+  (* | tApp t1 t2 => isAugmentable t1 || existsb isAugmentable t2 *)
+  (* not list recursive *)
+  | tApp t1 t2 => isAugmentable t1
   | _ => false
   end.
 
@@ -500,7 +502,7 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   idname <- getIdent t;;
   tmMsg ("Complete Identifier: "^id);;
   tmMsg ("Short Identifier: "^idname);;
-  tc' <- (if prune then Translate else Translate) tc id;; (* translate new definition *)
+  tc' <- (if prune then @Translate param_prune else @Translate param) tc id;; (* translate new definition *)
   (* TODO: chose pruning translation *)
 
   gr <- tmLookup t;;
@@ -521,3 +523,6 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   tmExistingInstance (VarRef newName);;
   tmReturn tc'
   .
+
+Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
+  persistentTranslate_prune t false.
