@@ -8,18 +8,13 @@ Local Infix "<=" := Nat.leb.
 Definition default_term := tVar "constant_not_found".
 Definition debug_term msg:= tVar ("debug: " ^ msg).
 
-
-
+(* for debugging *)
 (* Definition subst_app := mkApps. *)
   (* Definition todo := tVar. *)
 
-(* Class param_arg (s:string) := { state: bool }. *)
-(* Instance no_pruning : param_arg "prune" := {| state := false |}. *)
-
 (* lifts everything after n *)
 (* morally identity *)
-(* TODO: general nested lifting *)
-(* TODO: term mapping on base terms (like tRel) *)
+(* LEGACY code for comparison *)
 Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
   match t with
   | tRel k => if n <= k then tRel (2*k-n+1) else t
@@ -37,11 +32,7 @@ Fixpoint tsl_rec0 (n : nat) (t : term) {struct t} : term :=
   | _ => t
   end.
 
-Definition tsl_rec0' (n : nat) (t : term) : term := t.
-
-
-
-
+(* LEGACY code for comparison *)
 Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
   let tsl_rec1 := tsl_rec1_app None in
   let debug case symbol :=
@@ -128,56 +119,42 @@ Fixpoint tsl_rec1_app (app : option term) (E : tsl_table) (t : term) : term :=
 
 
 
-(* the unary parametricity translation of an object is
-a relation over the objects *)
-(* X_1 is the unary parametricity translation
-where the identifiers are Xᵗ *)
+
+
 (*
-types T are translated into relations of objects of type T
-  (using lambas for the objects)
-terms are translated to proofs of the relations
+Environment mappings are used as a generalized lifting function
+n ↦ S n
+is a lifting like lift0 1
 *)
-(* Definition up (relTrans:nat->nat) (n:nat) :nat :=
-  pred (relTrans n). *)
-  (* match n with
-  1 => O
-  | _ => n
-  end. *)
-Print lift.
-
-
-
-
-(* Fixpoint tsl_rec0_2 (rel:nat->nat) (from : nat) (t : term) {struct t} : term :=
-  match t with
-  | tRel k => if from <= k then tRel (from+rel (k-from)) else t
-  | tEvar k ts => tEvar k (map (tsl_rec0_2 rel from) ts)
-  | tCast t c a => tCast (tsl_rec0_2 rel from  t) c (tsl_rec0_2 rel from a)
-  | tProd na A B => tProd na (tsl_rec0_2 rel from A) (tsl_rec0_2 rel (from+1) B)
-  | tLambda na A t => tLambda na (tsl_rec0_2 rel from A) (tsl_rec0_2 rel (from+1) t)
-  | tLetIn na t A u => tLetIn na (tsl_rec0_2 rel from t) (tsl_rec0_2 rel from A) (tsl_rec0_2 rel (from+1) u)
-  | tApp t lu => tApp (tsl_rec0_2 rel from t) (map (tsl_rec0_2 rel from) lu)
-  | tCase ik t u br => tCase ik (tsl_rec0_2 rel from t) (tsl_rec0_2 rel from u)
-                            (map (fun x => (fst x, tsl_rec0_2 rel from (snd x))) br)
-  | tProj p t => tProj p (tsl_rec0_2 rel from  t)
-  (* | tFix : mfixpoint term -> nat -> term *)
-  (* | tCoFix : mfixpoint term -> nat -> term *)
-  | _ => t
-  end. *)
-
 Definition Env := nat -> nat.
+(*
+Encapsulate element 0,
+useful for lambda λ, let and products ∀
+⇑ E 0 = 0
+⇑ E (S n) = E (S n)
+also used inside the application of lifting environments
+*)
 Definition EnvUp (E:Env) : Env :=
   fun n => match n with
   | O =>  O
   | S x => S (E x)
   end.
 
+(*
+lift all variables larger or equal to k by n
+↑^n_k ≈ lift n k
+the syntax reflects lift n k and lift0 n
+*)
 Definition EnvLift (E:Env) (n:nat) (k:nat) : Env :=
   fun x => let y := E x in
   if k<=y then n+y else y.
 
 Definition EnvLift0 E n := EnvLift E n 0.
 
+(*
+application of a lifting environment to a term
+under binders the given environment is transformed using up
+*)
 Fixpoint tsl_rec0_2 (rel:Env) (t : term) {struct t} : term :=
   match t with
   | tRel k => tRel (rel k)
@@ -195,46 +172,15 @@ Fixpoint tsl_rec0_2 (rel:Env) (t : term) {struct t} : term :=
   | _ => t
   end.
 
-(* Goal forall r n k E, EnvUp (EnvLift E n k) r = EnvLift E n (S k) r.
-Proof.
-  induction r;cbn;intros.
-  - unfold EnvLift.
-  induction t using term_forall_list_ind;cbn;
-  try rewrite IHt1;try rewrite IHt2;try easy;intros n0 k E.
-
-Goal forall t n k E, tsl_rec0_2 (EnvLift E n k) t = lift n k (tsl_rec0_2 E t).
-Proof.
-  induction t using term_forall_list_ind;cbn;
-  try rewrite IHt1;try rewrite IHt2;try easy;intros n0 k E.
-  - admit.
-  - f_equal.
-    + apply IHt1.
-    + apply IHt2. *)
-
-(* Goal forall t, tsl_rec0_2 (fun n => n) t = t.
-Proof.
-  induction t using term_forall_list_ind;cbn;
-  try rewrite IHt1;try rewrite IHt2;try easy.
-  - admit.
-  - now rewrite IHt1, IHt2. *)
-
-  (* Compute(EnvUp (EnvLift (fun n => n) 2 0) 1).
-  Compute(EnvLift (EnvUp (fun n => n)) 2 1 1). *)
-
-(* Goal forall n E, (forall n, E n >= n) -> EnvUp (EnvLift E 2 0) n = EnvLift (EnvUp E) 2 1 n.
-Proof.
-intros n E H.
-  induction n;trivial;cbn.
-  unfold EnvLift, EnvUp.
-  assert(1<=E n) as -> by lia.
-  rewrite <- IHn. *)
-
 From MetaCoq Require Import Checker.
-(* Check eq_term. *)
+(* Checker for eq_term *)
+(* checker is already required for translation utils *)
 Existing Instance config.default_checker_flags.
 
-
-
+(*
+check if the term is suitable for translation with additional information
+=> is a (recursive) argument, or a type
+*)
 Fixpoint isAugmentable (t:term) := 
   match t with 
   | tRel _ | tSort _ => true
@@ -243,9 +189,12 @@ Fixpoint isAugmentable (t:term) :=
   | _ => false
   end.
 
-  (* Definition deleteNonTypes:=true. *)
-  (* Definition deleteNonTypes:=false. *)
-
+(*
+jointly handling of constants:
+* definitions (tConst)
+* inductive types (tInd)
+* constructors (tConstruct)
+*)
 Inductive isConstant : term -> Type :=
 | constIsConstant s univs: isConstant (tConst s univs)
 | indIsConstant i univs: isConstant (tInd i univs)
@@ -273,6 +222,20 @@ match t with
 end.
 
 
+(* the unary parametricity translation of an object is
+a relation over the objects *)
+(* X_1 is the unary parametricity translation
+where the identifiers are Xᵗ *)
+(*
+types T are translated into relations of objects of type T
+  (using lambas for the objects)
+terms are translated to proofs of the relations
+*)
+(*
+two environments are used:
+Env for normal (not translated) terms
+and Envt for the translations of the original terms
+*)
 Fixpoint tsl_rec1' (deleteNonTypes:bool) (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
@@ -291,157 +254,93 @@ Fixpoint tsl_rec1' (deleteNonTypes:bool) (Env Envt: nat -> nat) (E : tsl_table) 
     tLambda (nNamed "f") (tProd na (tsl_rec0_2 Env A) (tsl_rec0_2 (EnvUp Env) B))
       (tProd na (tsl_rec0_2 (EnvLift0 Env 1) A)
       (*     x  :  A      *)
-                (* lift over f *)
+                          (* lift over f *)
           (if generate then
              (tProd (tsl_name tsl_ident na)
                     (subst_app (tsl_rec1' deleteNonTypes (EnvLift0 Env 2) (EnvLift0 Envt 2) E A) [tRel 0])
-                    (* xᵗ           Aᵗ           x  *)
-                               (* lift over x, f *)
-                    (* (subst_app (lift0 0 (lift 1 2 B1)) *)
-                    (* (subst_app (tsl_rec1' deleteNonTypes (EnvLift 1 0 (EnvLift 1 1 Env)) (EnvLift 2 1 Envt) E B) *)
-                    (* (subst_app (tsl_rec1' deleteNonTypes (EnvLift (EnvLift Env 1 1) 1 0) (EnvLift (EnvUp Envt) 2 1) E B) *)
+                    (* xᵗ  :        Aᵗ                                                              x  *)
+                                                              (* lift over x and f *)
                     (subst_app (tsl_rec1' deleteNonTypes (EnvLift (EnvLift (EnvUp Env) 1 1) 1 0) (EnvLift (EnvUp Envt) 2 1) E B)
-                    (* (subst_app (lift0 1 (lift 1 2 B1)) *)
-                    (* (subst_app (lift0 1 (lift 0 2 B1)) *)
-                                (* lift after x over f and all over x^t *)
+                                                        (* go under ∀ x binder, lift over xᵗ and f *)
+                                                                                            (* go under ∀ x binder, lift over x and f *)
                                [tApp (tRel 2) [tRel 1]]))
+                              (* f x *)
           else
             (subst_app 
               (tsl_rec1' deleteNonTypes (EnvLift (EnvUp Env) 1 1) (EnvLift (EnvUp Envt) 1 1) E B)
               [tApp (tRel 1) [tRel 0]]))
       )
 
-(* old
-  (* for A^t take relations like A -> lift up to position of A *)
-  (* for apply to tRel 0 which is A *)
-    (* let A0 := lift0 1 (tsl_rec0' 0 A) in *)
-    let A0 := (tsl_rec0_2 liftTsl0 A) in
-    (* let B0 := lift 1 1 (tsl_rec0' 1 B) in *)
-    let B0 := (tsl_rec0_2 liftTsl0 B) in
-    (* let A1 := tsl_rec1' deleteNonTypes (up 0 liftTsl0) liftTsl1 E A in *)
-    let B1 := tsl_rec1' deleteNonTypes (up 1 1 liftTsl0) liftTsl1 E B in
-    let ΠAB0 := tProd na A0 B0 in (* could (maybe) & should be infered *)
-    tLambda (nNamed "f") ΠAB0
-      (tProd na (tsl_rec0_2 (up 1 0 liftTsl0) A0)
-      (*     x  :  A      *)
-                (* lift over f *)
-             (tProd (tsl_name tsl_ident na)
-                    (subst_app (tsl_rec1' deleteNonTypes (up 2 0 liftTsl0) (up 2 0 liftTsl1) E A) [tRel 0])
-                    (* xᵗ           Aᵗ           x  *)
-                               (* lift over x, f *)
-                    (* (subst_app (lift0 0 (lift 1 2 B1)) *)
-                    (subst_app (tsl_rec1' deleteNonTypes (up 1 0 (up 1 1 liftTsl0)) (up 2 1 liftTsl1) E B)
-                    (* (subst_app (lift0 1 (lift 1 2 B1)) *)
-                    (* (subst_app (lift0 1 (lift 0 2 B1)) *)
-                                (* lift after x over f and all over x^t *)
-                               [tApp (tRel 2) [tRel 1]]))) *)
-                               (*       f        x *)
-
-
-    (* let A0 := tsl_rec0 0 A in
-    let A1 := tsl_rec1 E A in
-    let B0 := tsl_rec0 1 B in
-    let B1 := tsl_rec1 E B in
-    let ΠAB0 := tProd na A0 B0 in (* could (maybe) & should be infered *)
-    tLambda (nNamed "f") ΠAB0
-      (tProd na (lift0 1 A0)
-             (tProd (tsl_name tsl_ident na)
-                    (subst_app (lift0 2 A1) [tRel 0])
-                    (subst_app (lift 1 2 B1)
-                               [tApp (tRel 2) [tRel 1]]))) *)
-
-  (* values *)
-  (* | tRel (S k) => (* x ⇒ xᵗ *)
-    tRel k *)
   | tRel k => (* x ⇒ xᵗ *)
-  (* TODO: maybe wrong
+  (* 
   Q x, T  -> Q x x^t, T
   0(x) => 0(x^t)
 
   Q y z, T -> Q y y^t z z^t, T
   1(y) => 2(y^t)
+
+  the arguments are translated 
+  to the newly added translations
+  the indices are handeled by the
+  translated environment
   *)
-    (* tRel k *)
-    (* tRel (liftTsl1 k) *)
     tRel (Envt k)
-    (* tRel (pred k) *)
-    (* tRel (relTrans k) *)
-    (* tRel (2 * k) *)
-  | tLambda na A t =>  (* ignore firt *)
-  (* TODO: type of result *)
+  | tLambda na A t =>
     (* λ(x:A).t ⇒ λ(x:A_0)(xᵗ:A_1 x). t_1 *)
 
     (* proof of function A->B is translated to proof 
       of a relation of B taking related arguments
     *)
-    (* TODO: ignored generate for now *)
-    (* todo "tsl lam" *)
     tLambda na (tsl_rec0_2 Env A) 
       (tLambda (tsl_name tsl_ident na)
                (subst_app (tsl_rec1' deleteNonTypes (EnvLift0 Env 1) (EnvLift0 Envt 1) E A) [tRel 0])
-                           (* (tsl_rec1' deleteNonTypes (EnvLift0 1 Env) (EnvLift 1 1 Envt)  E t)) *)
+                                                          (* lift over x *)
                            (tsl_rec1' deleteNonTypes (EnvLift (EnvUp Env) 1 0) (EnvLift (EnvUp Envt) 1 1)  E t))
-    (* let A0 := tsl_rec0' 0 A in
-    let A1 := tsl_rec1' deleteNonTypes relTrans E A in
-    tLambda na A0 (tLambda (tsl_name tsl_ident na)
-                           (subst_app (lift0 1 A1) [tRel 0])
-                           (tsl_rec1' deleteNonTypes relTrans E t)) *)
+                                                                    (* go under binder x *)
+                                                      (* lift over x^t *)
+                                                                                (* use x^t, lift over x *)
   | tApp t us =>
-  (* t1 t2 ⇒ t1_1 t2_0 t2_1 *)
+  (* t1 t2 ⇒ t1ᵗ t2 t2ᵗ *)
   (* for every argument t2 the relation of t1 is supplied with
    the argument t2 and the relation over t2 *)
-    (* todo "tsl tApp" *)
-
     let us' := concat (map (fun v => 
       let arg := tsl_rec0_2 Env v in
       let argt :=  tsl_rec1' deleteNonTypes Env Envt E v in
-      if (eq_term init_graph arg argt || negb(isAugmentable arg)) && deleteNonTypes then [arg] else  (* not S -> S^t (but maybe nested?) *)
+      if (eq_term init_graph arg argt || negb(isAugmentable arg)) && deleteNonTypes then [arg] else  (* not S -> S^t *)
       [arg;argt]) us) in
     mkApps (tsl_rec1' deleteNonTypes Env Envt E t) us'
-    (* let us' := concat (map (fun v => [tsl_rec0' 0 v; tsl_rec1' deleteNonTypes relTrans E v]) us) in
-    mkApps (tsl_rec1' deleteNonTypes relTrans E t) us' *)
-
   | tLetIn na t A u =>
-  (* TODO: documentation *)
-    (* TODO: ignored generate for now *)
+  (* let x := t : A in u ⇒ 
+     let x := t : A in 
+       let xᵗ := tᵗ : Aᵗ x in
+       uᵗ
+    *)
     tLetIn na (tsl_rec0_2 Env t) (tsl_rec0_2 Env A) 
     (tLetIn (tsl_name tsl_ident na) 
           (tsl_rec1' deleteNonTypes (EnvLift0 Env 1) (EnvLift0 Envt 1) E t)
+                                           (* lift over x *)
           (subst_app (tsl_rec1' deleteNonTypes (EnvLift0 Env 1) (EnvLift0 Envt 1) E A) [tRel 0]) 
+                                                        (* lift over x *)
           (tsl_rec1' deleteNonTypes (EnvLift (EnvUp Env) 1 0) (EnvLift (EnvUp Envt) 1 1)  E u))
-
-    (* let t0 := tsl_rec0 0 t in
-    let t1 := tsl_rec1 E t in
-    let A0 := tsl_rec0 0 A in
-    let A1 := tsl_rec1 E A in
-    let u0 := tsl_rec0 0 u in
-    let u1 := tsl_rec1 E u in
-    tLetIn na t0 A0 (tLetIn (tsl_name tsl_ident na) (lift0 1 t1)
-                            (subst_app (lift0 1 A1) [tRel 0]) u1) *)
-
+                                                  (* go under x binder *)
+                                    (* lift over xᵗ *)
+                                                              (* lift over x *)
   | tCast t c A => 
-  (* TODO: documentation *)
-    (* TODO: ignored generate for now *)
+  (* (A) t ⇒ (Aᵗ ((A) x)) tᵗ *)
+  (* casting of t into A is transformed
+  to the casting of the translation of t 
+  into the translation fo A applied to the 
+  original casting
+
+  no lifting is required
+   *)
   tCast (tsl_rec1' deleteNonTypes Env Envt E t) c 
     (mkApps (tsl_rec1' deleteNonTypes Env Envt E A) 
       [tCast (tsl_rec0_2 Env t) c (tsl_rec0_2 Env A)])
-    (* let t0 := tsl_rec0 0 t in
-    let t1 := tsl_rec1 E t in
-    let A0 := tsl_rec0 0 A in
-    let A1 := tsl_rec1 E A in(* apply_subst instead of mkApps? *)
-    tCast t1 c (mkApps A1 [tCast t0 c A0])  *)
-  (* | tCast _ _ _ | tLetIn _ _ _ _ => todo "tsl" *)
 
 
   (* all three constants are translated by a lookup in the table *)
-  (* | (tConst _ _ as q)
-  | (tInd _ _ as q)
-  | (tConstruct _ _ _ as q) =>
-    match lookup_tsl_table E (@getRef q _) with
-    | Some t => t
-    | None => debug "tConst" (string_of_kername (@getKername q _))
-    end *)
-    
+  (* combination of the three cases would need equation to remember the case *)
   | tConst s univs =>
     match lookup_tsl_table E (ConstRef s) with
     | Some t => t
@@ -458,23 +357,15 @@ Fixpoint tsl_rec1' (deleteNonTypes:bool) (Env Envt: nat -> nat) (E : tsl_table) 
     | None => debug "tConstruct" (match i with mkInd s _ => string_of_kername s end)
     end
 
-  | tCase ik t u brs as case =>
-  (* TODO: documentation, code *)
-    let brs' := List.map (on_snd (lift0 1)) brs in
-    let case1 := tCase ik (lift0 1 t) (tRel 0) brs' in
-    match lookup_tsl_table E (IndRef (fst ik)) with
-    (* | Some (tInd i _univ) =>
-      tCase (i, (snd ik) * 2)%nat
-            (tsl_rec1_app (Some (tsl_rec0 0 case1)) E t)
-            (tsl_rec1 E u)
-            (map (on_snd (tsl_rec1 E)) brs) *)
-    | _ => debug "tCase" (match (fst ik) with mkInd s _ => string_of_kername s end)
-    end
-  (* TODO: documentation, code *)
+  | tCase _ _ _ _ => todo "tsl"
   | tProj _ _ => todo "tsl"
   | tFix _ _ | tCoFix _ _ => todo "tsl"
   | tVar _ | tEvar _ _ => todo "tsl var"
   end.
+
+(* TODO: move test into extra file *)
+(** BEGIN Test **)
+
 (* Tests for manual prod lifting
 Compute (tsl_rec1' (fun n => n) (fun n => n) [] 
   ((tProd (nNamed "y") (tVar "Y") (tRel 0)))
@@ -552,22 +443,17 @@ MetaCoq Run (bruijn_print testᵗp).
 
 Compute (pretty_print (testᵗ)).
 
+(** END Test **)
 
-(* Definition tsl_rec1 := if (tsl_rec1' (fun n => S(2*n)) (fun n => 2*n)%nat) is Some x then x else tVar "Error". *)
-Definition tsl_rec1 := tsl_rec1' false (fun n => S(2*n)) (fun n => 2*n)%nat.
+
+(* initial translation of outside variables (like inductive types) are 
+most clearly stated by multiplication *)
 Definition tsl_rec1_prune (prune:bool) := tsl_rec1' prune (fun n => S(2*n)) (fun n => 2*n)%nat.
-(* Definition tsl_rec1 := tsl_rec1_org. *)
-
-(* theoretic statement needs many lemmas and strengthening
-Goal forall t E, tsl_rec1 E t = tsl_rec1_org E t.
-Proof.
-  intros t;
-  induction t using term_forall_list_ind;cbn;
-  try rewrite IHt1;try rewrite IHt2;try easy. *)
+Definition tsl_rec1 := tsl_rec1_prune false.
 
 
 (* deletes lambdas in front of a term *)
-(* ued for product relation function *)
+(* used for product relation function *)
 Fixpoint remove_lambda (t : term) : term :=
   match t with
   | tLambda _ _ B => remove_lambda B
@@ -595,7 +481,7 @@ but the it_mkProd_or_LetIn uses a reversed list
 in the end a reversion is needed as decompose
 is in correct order *)
 Definition transformParams (prune:bool) (E:tsl_table) (params:context) : context :=
-    (let paramType := it_mkProd_or_LetIn params <% Type %> in (* TODO: does Type always work *)
+    (let paramType := it_mkProd_or_LetIn params <% Type %> in
     let transformRel := tsl_rec1_prune prune E paramType in
     let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
     tl (rev prods)).
@@ -639,7 +525,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
               ind_type := _;
               ind_kelim := ind.(ind_kelim);
               ind_ctors := _;
-              ind_projs := [] |}. (* TODO: projections *)
+              ind_projs := [] |}.
     + (* translate the type (with parameters) of the inductive body *)
       refine (subst_app (tsl_rec1_prune prune E ind.(ind_type))
                                   [tInd (mkInd kn i) []]).
@@ -693,7 +579,7 @@ Fixpoint lastPart (id:ident) :=
     )
   end.
 
-  
+(* removed the modpath in front of the identifier *)
 Definition tsl_ident' id := tsl_ident(fst(lastPart id)).
 
 Instance param_prune : Translation :=
@@ -797,7 +683,7 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   tmMsg ("Complete Identifier: "^id);;
   tmMsg ("Short Identifier: "^idname);;
   tc' <- (if prune then Translate else Translate) tc id;; (* translate new definition *)
-  (* TODO: *)
+  (* TODO: chose pruning translation *)
 
   gr <- tmLookup t;;
   (* extend table *)
@@ -817,24 +703,3 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   tmExistingInstance (VarRef newName);;
   tmReturn tc'
   .
-
-
-
-(* lemmas about env vs lift *)
-
-(* Goal forall t E, tsl_rec1 E t = tsl_rec1_org E t.
-Proof.
-  unfold tsl_rec1, tsl_rec1_org.
-  (* generalize tsl_rec1' Env Envt *)
-  intros t; induction t eqn: H using term_forall_list_ind;cbn;eauto;intros.
-  (* all: cbn in *. *)
-    - admit. (* Naming *)
-    - admit. (* Naming *)
-    - admit. (* Naming *)
-  - admit. (* cast *)
-  - admit. (* prod *)
-  - admit. (* lambda *)
-  - admit. (* letin *)
-  - admit. (* app *)
-    - admit. (* case *)
-Abort. *)
