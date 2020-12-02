@@ -129,6 +129,8 @@ Definition tsl_rec1_org := tsl_rec1_app None.
 Load de_bruijn_print.
 Definition pretty_print := print_term (empty_ext []) [] true.
 
+From MetaCoq Require Import Checker.
+
 Ltac testTerm test :=
 let testᵗ := constr:(tsl_rec1' 
   false
@@ -141,13 +143,15 @@ let testᵗp := constr:(tsl_rec1'
   (fun n => 2*n)%nat
   [] test) in
 let testᵗ2 := constr:(tsl_rec1_org [] test) in
-run_template_program (print_nf test) (fun _ => 
-run_template_program (bruijn_print test) (fun _ => 
-run_template_program (bruijn_print testᵗ) (fun _ => 
-run_template_program (bruijn_print testᵗ2) (fun _ => 
-run_template_program (bruijn_print testᵗp) (fun _ => 
-idtac "";idtac "=====================";idtac ""
-))))). 
+run_template_program (
+    print_nf test;;
+    bruijn_print test;;
+    bruijn_print testᵗ;;
+    bruijn_print testᵗ2;;
+    bruijn_print testᵗp) (fun _ => 
+let eq := eval hnf in (eq_term init_graph testᵗ testᵗ2) in
+idtac "";idtac "equal: " eq;idtac "=====================";idtac ""
+). 
 
 Ltac testTerms xs :=
     lazymatch xs with 
@@ -171,3 +175,5 @@ Compute (ltac:(testTerms [
 <% fun (P:Type) => let X := P in let Y := X in forall (Q:Type->Type->Type), Q Y X %>;
 <% Type %>
 ])).
+
+(* takes 2min 30s with eq_term *)
