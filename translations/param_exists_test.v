@@ -1,10 +1,13 @@
 Inductive Prod1 (X:Type) := Con (x1 x2:X).
 Inductive Prod (X Y:Type) := pair (x:X) (y:Y).
-Inductive List (X:Type) := nil | cons (x:X) (xs:List X).
+Inductive List (X:Type) := nilL | consL (x:X) (xs:List X).
 Inductive Complex (X Y:Type) := AC (x:X) | BC (x:X) (y1 y2:Y) | CC (y:Y) (c:Complex X Y).
 Inductive G (X:Type) := GI (f:nat -> X).
 Inductive R (X:Type) := T (xs:List X).
-Inductive F (F:nat -> Type) := FI (x:F 0).
+Inductive F (FT:nat -> Type) := FI (x:FT 0).
+Inductive Ind (X:Type) : nat -> Type := IndC : Ind X 0.
+Inductive IndT (X:Type) : forall (Y:Type), Type := IndTC : IndT X nat.
+(* indices *)
 
 Load param_exists.
 
@@ -36,3 +39,31 @@ MetaCoq Run (printInductive Prod1').
 MetaCoq Run (printInductive Prod1t).
 MetaCoq Run (persistentTranslate (Prod1)).
 Print Prod1ᵗ.
+
+Inductive Prodt X (Xt:X->Type) Y (Yt:Y->Type) : Prod X Y -> Type := pairt (x:X) (y:Y): Prodt X Xt Y Yt (pair X Y x y).
+MetaCoq Run (printInductive Prodt).
+MetaCoq Run (persistentTranslate (Prod)).
+Print Prodᵗ.
+
+
+Inductive Listt (X:Type) (Xt:X->Type) : List X -> Type := 
+| nilLt : Listt X Xt (nilL X) 
+| consLt (x:X) (xs:List X) : Listt X Xt (consL X x xs).
+MetaCoq Run (printInductive Listt).
+MetaCoq Run (persistentTranslate (List)).
+Print Listᵗ.
+
+
+MetaCoq Run (persistentTranslate (Complex)).
+Print Complexᵗ.
+
+MetaCoq Run (persistentTranslate G).
+Print Gᵗ.
+MetaCoq Run (persistentTranslate R).
+Print Rᵗ.
+MetaCoq Run (persistentTranslate F).
+Print Fᵗ.
+MetaCoq Run (persistentTranslate Ind).
+Print Indᵗ.
+MetaCoq Run (persistentTranslate IndT).
+Print IndTᵗ.

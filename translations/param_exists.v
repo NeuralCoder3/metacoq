@@ -302,8 +302,8 @@ Fixpoint transformParams (env:Env) (E:tsl_table) (params:context) : context*Env 
   | nil => (nil,env)
   | (mkdecl name _ type as decl)::xs =>
     on_fst (cons (vass name (applyEnv env type)))
-    (if augment type is Some t' then 
-      on_fst (cons (vass (name_map tsl_ident name) (applyEnv (EnvLift0 env 0) t'))) (transformParams (EnvLift0 (EnvUp env) 1) E xs)
+    (if augment (applyEnv env type) is Some t' then 
+      on_fst (cons (vass (name_map tsl_ident name) (t'))) (transformParams (EnvLift0 (EnvUp env) 1) E xs)
     else 
       transformParams (EnvUp env) E xs)
   end.
@@ -346,7 +346,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
   (* for a pure unary parametricity translation even
   mind.(ind_params) ++ mind.(ind_params) workds *)
  (* the universe of the inductive and the variance are not changed by the translation *)
-  set(paramlist_env := on_fst rev (transformParams (fun n => n) E mind.(ind_params))).
+  set(paramlist_env := on_fst rev (transformParams (fun n => n) E (rev mind.(ind_params)))).
   destruct paramlist_env as [paramlist env].
   refine (_, [{| ind_npars := #|paramlist|;
                  ind_params := paramlist;
@@ -391,7 +391,13 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
       mapi 
       (
         fun k '((name,typ,nargs)) => 
-        let typ' := remove_arity (mind.(ind_npars)) typ in
+        let typInd :=  (* fillin inductives for recursion *)
+          (fold_left_i 
+            (fun t0 i u  => t0 {i := u})
+            (rev (mapi (fun i _ => tInd (mkInd kn i) [])
+                              mind.(ind_bodies)))
+            typ) in
+        let typ' := remove_arity (mind.(ind_npars)) typInd in
         let (args,tb) := decompose_prod_context (applyEnv env typ') in
         let inst :=
           mkApps (lift0 #|args| (applyEnv env (tApp (tConstruct (mkInd kn i) k []) (makeRels mind.(ind_npars))))) (makeRels #|args|)
@@ -399,7 +405,8 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
         (* apply new params => remove old app add new *)
         let tbNewParams :=
           (if tb is (tApp tI appargs) then
-            mkApps tI ((map (lift0 #|args|) (makeRels #|paramlist|)) ++ (cutList mind.(ind_npars) appargs))
+          (* tI was replace by ind filling *)
+            mkApps (tRel (#|paramlist| + #|args|)) ((map (lift0 #|args|) (makeRels #|paramlist|)) ++ (cutList mind.(ind_npars) appargs))
           else tb)
         in
 (* mkApps (removeApps mind.(ind_npars) tb) (map (lift0 #|args| )) *)
