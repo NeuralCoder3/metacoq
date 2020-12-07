@@ -387,6 +387,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
                                   [tInd (mkInd kn i) []]). *)
     + (* constructors *)
       (* definition as function for better control flow overview *)
+      refine (concat _).
     refine(
       mapi 
       (
@@ -404,10 +405,11 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
         in
         (* apply new params => remove old app add new *)
         let tbNewParams :=
+          let recInst := tRel (#|paramlist| + #|args|) in
           (if tb is (tApp tI appargs) then
           (* tI was replace by ind filling *)
-            mkApps (tRel (#|paramlist| + #|args|)) ((map (lift0 #|args|) (makeRels #|paramlist|)) ++ (cutList mind.(ind_npars) appargs))
-          else tb)
+            mkApps recInst ((map (lift0 #|args|) (makeRels #|paramlist|)) ++ (cutList mind.(ind_npars) appargs))
+          else recInst)
         in
 (* mkApps (removeApps mind.(ind_npars) tb) (map (lift0 #|args| )) *)
         let tb' := mkApp tbNewParams inst in
@@ -421,9 +423,15 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
         it_mkProd_or_LetIn (rev args) (
           tb'
         )) in
+        mapi 
+          (fun i '(na,ty,n) => (na^(string_of_nat i),ty,n))
+        (repeat 
+        (* [ *)
         (tsl_ident name, 
         ctor_type, 
         #|fst (decompose_prod_context ctor_type)|)
+        (* ] *)
+        #|args|)
       )
       ind.(ind_ctors)
     ).

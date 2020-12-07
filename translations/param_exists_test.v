@@ -30,6 +30,13 @@ Definition test := forall (X:Type) (x1:X) (Y:Type) (y1:Y) (x2:X) (y2:Y), Type.
 MetaCoq Run (persistentTranslate (test)).
 Print testᵗ.
 
+Inductive natt : nat -> Type := 
+| O : natt O
+| S n: natt (S n).
+
+MetaCoq Run (printInductive natt).
+MetaCoq Run (persistentTranslate nat).
+Print natᵗ.
 
 Inductive Prod1' (X:Type) (X':X->Type) := Con' (x1 x2:X).
 Inductive Prod1t (X:Type) (X':X->Type) : Prod1 X -> Type := Cont (x1 x2:X): Prod1t X X' (Con X x1 x2).
