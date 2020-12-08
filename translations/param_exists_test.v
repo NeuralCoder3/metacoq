@@ -49,8 +49,11 @@ Inductive Gt (X:Type) (Xt:X->Type) : G X -> Type :=
 MetaCoq Run (printInductive Gt).
 Fail MetaCoq Run (persistentTranslate G). (* correct but universe unquoting error *)
 Fail Print EXG. 
-MetaCoq Run (persistentTranslate R).
-Print EXR.
+
+Inductive Rt (X:Type) (Xt:X->Type) : R X -> Type := Tt (xs:List X): EXList X Xt xs -> Rt X Xt (T X xs).
+MetaCoq Run (printInductive Rt).
+Fail MetaCoq Run (persistentTranslate R). (* correct but universe error *)
+Fail Print EXR.
 MetaCoq Run (persistentTranslate F).
 Print EXF.
 MetaCoq Run (persistentTranslate Ind).

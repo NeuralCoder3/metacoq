@@ -364,14 +364,27 @@ Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount argCount:nat) (rec:term) (recI
     if leb argCount n then
       Some (tRel (n))
     else None
+
   | tInd ind inst => 
     if eq_inductive ind recInd then 
       Some rec else 
-      None
+    (lookup_tsl_table E (IndRef ind) )
       (* Some (tApp (tVar "IND") [t;tInd recInd []]) *)
-  | tApp (tInd _ _ as iT) args => 
+
+  | tApp tb args => 
+    if tsl_rec1' E oldParamCount argCount rec recInd tb is Some r then
+      Some (mkApps r (concat (map (fun a => 
+        if tsl_rec1' E oldParamCount argCount rec recInd a is Some ra then
+        [a;ra]
+        else [a]
+      ) args)))
+    else None
+
+  (* | tApp (tInd _ _ as iT) args => 
     if tsl_rec1' E oldParamCount argCount rec recInd iT is Some r then
-    Some(mkApps r (cutList oldParamCount args)) else None
+    Some(mkApps r (cutList oldParamCount args)) else None *)
+
+
   (* | tInd ind inst => handleInd ind inst [] *)
   (* | tApp (tInd ind inst) args => handleInd ind inst args *)
   | tProd na t1 t2 => 
@@ -486,7 +499,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
         rev(fold_left_i
         (fun acc j arg => 
           (* rec is replaced *)
-          let rec :=  tbNewParams in
+          let rec := recInst in
           let augArgO := tsl_rec1' E mind.(ind_npars) #|args| rec (mkInd kn i) (lift0 (#|args| - j) (decl_type arg)) in
           (* let augArgO := Some (lift0 (#|args| - j) (decl_type arg)) in *)
           (* let augArg := Some (tRel 0) in *)
