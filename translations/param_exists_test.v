@@ -10,8 +10,15 @@ Inductive IndT (X:Type) : forall (Y:Type), Type := IndTC : IndT X nat.
 (* indices *)
 
 Load param_exists.
+
 (* temp for quick test *)
-MetaCoq Run (persistentTranslate (List)).
+(* Inductive augTest : Type := 
+Aug (n:nat) (b:bool).
+MetaCoq Run (persistentTranslate augTest).
+Print EXaugTest. *)
+MetaCoq Run (persistentTranslate Prod).
+Print EXProd.
+MetaCoq Run (persistentTranslate List).
 Print EXList.
 
 

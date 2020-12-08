@@ -247,10 +247,10 @@ Notation "'if' x 'is' p 'then' A 'else' B" :=
   (match x with p => A | _ => B end)
     (at level 200, p pattern,right associativity).
 
-Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : option term :=
+(* Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : option term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
-  Some t.
+  Some t. *)
 
 (* deletes lambdas in front of a term *)
 (* used for product relation function *)
@@ -288,7 +288,7 @@ is in correct order *)
 
 (* Definition tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term := t. *)
 
-Definition tsl_rec1 := tsl_rec1' (fun n => n) (fun n => n).
+(* Definition tsl_rec1 := tsl_rec1' (fun n => n) (fun n => n). *)
 
 (* rec, apply list *)
 (* lift everything else by 1 *)
@@ -336,6 +336,36 @@ Fixpoint cutList {X} n (xs:list X) :=
 
 Definition removeApps n t :=
   if t is tApp tb args then mkApps tb (cutList n args) else t.
+
+Definition idEnv n : nat := n.
+
+
+Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount:nat) (rec:term) (recInd:inductive) (t : term) : option term :=
+  let debug case symbol :=
+      debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
+      (* if rec => already replaced *)
+  (* let handleInd ind inst arg := None
+    if eq_inductive ind recInd then 
+      Some rec (* transfer indices *)
+    else
+      Some (tApp (tVar "IND") [t])
+  in *)
+  match t with
+  | tRel (S n) => Some (tRel (n))
+  | tInd ind inst => 
+    if eq_inductive ind recInd then 
+      Some rec else 
+      None
+      (* Some (tApp (tVar "IND") [t;tInd recInd []]) *)
+  | tApp (tInd _ _ as iT) args => 
+    if tsl_rec1' E oldParamCount rec recInd iT is Some r then
+    Some(mkApps r (cutList oldParamCount args)) else None
+  (* | tInd ind inst => handleInd ind inst [] *)
+  (* | tApp (tInd ind inst) args => handleInd ind inst args *)
+  | _ => None
+      (* Some (tApp (tVar "OTHER") [t]) *)
+  end.
+  (* lookup decl/ind *)
 
 
 (* translates a mutual inductive definition *)
@@ -409,15 +439,18 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
           mkApps (lift0 #|args| (applyEnv env (tApp (tConstruct (mkInd kn i) k []) (makeRels mind.(ind_npars))))) (makeRels #|args|)
         in
         (* apply new params => remove old app add new *)
+        let recInst := tRel (#|paramlist| + #|args|) in
         let tbNewParams :=
-          let recInst := tRel (#|paramlist| + #|args|) in
+          mkApps recInst (map (lift0 #|args|) (makeRels #|paramlist|))
+        in
+        let tbNewIndApp :=
           (if tb is (tApp tI appargs) then
           (* tI was replace by ind filling *)
-            mkApps recInst ((map (lift0 #|args|) (makeRels #|paramlist|)) ++ (cutList mind.(ind_npars) appargs))
+            mkApps tbNewParams (cutList mind.(ind_npars) appargs)
           else recInst)
         in
 (* mkApps (removeApps mind.(ind_npars) tb) (map (lift0 #|args| )) *)
-        let tb' := mkApp tbNewParams inst in
+        let tb' := mkApp tbNewIndApp inst in
         (* let tb' :=
           (tProd nAnon 
           (mkApps (lift0 #|args| (applyEnv env (tApp (tInd (mkInd kn i) []) (makeRels mind.(ind_npars))))) (makeRels #|args|)) (* old type with params *)
@@ -427,19 +460,28 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
       ind.(ind_ctors)
     ).
     refine(
-        nat_rect (fun _ => list ((ident×term)×nat)) []
-        (fun i acc => 
-          let ctor_type := 
+        rev(fold_left_i
+        (fun acc j arg => 
+          (* rec is replaced *)
+          let rec :=  tbNewParams in
+          let augArgO := tsl_rec1' E mind.(ind_npars) rec (mkInd kn i) (lift0 (#|args| - j) (decl_type arg)) in
+          (* let augArgO := Some (lift0 (#|args| - j) (decl_type arg)) in *)
+          (* let augArg := Some (tRel 0) in *)
+          if augArgO is Some augArgP then
+          let augArg := mkApp augArgP (tRel (#|args| - S j)) in
+          (* let augArg := augArgP in *)
+          (let ctor_type := 
           it_mkProd_or_LetIn paramlist (
           it_mkProd_or_LetIn (rev args) (
-            tProd nAnon <% nat %> 
+            tProd nAnon augArg
             (lift0 1 tb')
           )) in
-          (na^(string_of_nat i), 
+          (na^(string_of_nat j), 
           ctor_type, 
           #|fst (decompose_prod_context ctor_type)|)
-          :: acc
-        ) #|args|
+          :: acc)
+          else acc
+        ) args [])
     ).
 Defined.
 
