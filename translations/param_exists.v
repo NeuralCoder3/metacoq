@@ -295,6 +295,7 @@ is in correct order *)
 Definition augment (t:term) : option term :=
   match t with 
   | tSort u => Some(tProd nAnon (tRel 0) t)
+  (* | tSort u => Some(tProd nAnon (tRel 0) <% Type %>) *)
   | _ => None
   end.
 
@@ -340,7 +341,15 @@ Definition removeApps n t :=
 Definition idEnv n : nat := n.
 
 
-Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount:nat) (rec:term) (recInd:inductive) (t : term) : option term :=
+Definition tExists na t1 t2 :=
+  tApp (<% @sigT %>) [t1;tLambda na t1 t2].
+
+(* MetaCoq Unquote Definition test := (<% nat -> nat %>). *)
+(* MetaCoq Unquote Definition test := (tExists (nNamed "n") <% nat %> (mkApps <% @eq nat %> [tRel 0;tRel 0])).
+Print test. *)
+
+
+Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount argCount:nat) (rec:term) (recInd:inductive) (t : term) : option term :=
   let debug case symbol :=
       debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
       (* if rec => already replaced *)
@@ -351,17 +360,31 @@ Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount:nat) (rec:term) (recInd:induct
       Some (tApp (tVar "IND") [t])
   in *)
   match t with
-  | tRel (S n) => Some (tRel (n))
+  | tRel (S n) => 
+    if leb argCount n then
+      Some (tRel (n))
+    else None
   | tInd ind inst => 
     if eq_inductive ind recInd then 
       Some rec else 
       None
       (* Some (tApp (tVar "IND") [t;tInd recInd []]) *)
   | tApp (tInd _ _ as iT) args => 
-    if tsl_rec1' E oldParamCount rec recInd iT is Some r then
+    if tsl_rec1' E oldParamCount argCount rec recInd iT is Some r then
     Some(mkApps r (cutList oldParamCount args)) else None
   (* | tInd ind inst => handleInd ind inst [] *)
   (* | tApp (tInd ind inst) args => handleInd ind inst args *)
+  | tProd na t1 t2 => 
+  if tsl_rec1' E oldParamCount argCount rec recInd t2 is Some r then
+    Some (tLambda nAnon t (
+      tExists na (lift0 1 t1) (* universe problems *)
+      (
+        subst_app (lift0 1 r) [tApp (tRel 1) [tRel 0]]
+        (* TODO: test lifting of r *)
+      )
+    ))
+  (* tExists na t1 (mkApps r t1)  *)
+  else None
   | _ => None
       (* Some (tApp (tVar "OTHER") [t]) *)
   end.
@@ -464,11 +487,11 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
         (fun acc j arg => 
           (* rec is replaced *)
           let rec :=  tbNewParams in
-          let augArgO := tsl_rec1' E mind.(ind_npars) rec (mkInd kn i) (lift0 (#|args| - j) (decl_type arg)) in
+          let augArgO := tsl_rec1' E mind.(ind_npars) #|args| rec (mkInd kn i) (lift0 (#|args| - j) (decl_type arg)) in
           (* let augArgO := Some (lift0 (#|args| - j) (decl_type arg)) in *)
           (* let augArg := Some (tRel 0) in *)
           if augArgO is Some augArgP then
-          let augArg := mkApp augArgP (tRel (#|args| - S j)) in
+          let augArg := subst_app augArgP [tRel (#|args| - S j)] in
           (* let augArg := augArgP in *)
           (let ctor_type := 
           it_mkProd_or_LetIn paramlist (
@@ -478,7 +501,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
           )) in
           (na^(string_of_nat j), 
           ctor_type, 
-          #|fst (decompose_prod_context ctor_type)|)
+          #|fst (decompose_prod_context ctor_type)| - #|paramlist|)
           :: acc)
           else acc
         ) args [])
