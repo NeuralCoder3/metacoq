@@ -9,6 +9,8 @@ Definition default_term := tVar "constant_not_found".
 Definition debug_term msg:= tVar ("debug: " ^ msg).
 
 
+Definition tsl_ident id := "EX"^id . (* ∃∃ *)
+
 
 
 (*
@@ -245,7 +247,10 @@ Notation "'if' x 'is' p 'then' A 'else' B" :=
   (match x with p => A | _ => B end)
     (at level 200, p pattern,right associativity).
 
-
+Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : option term :=
+  let debug case symbol :=
+      debug_term ("tsl_rec1: " ^ case ^ " " ^ symbol ^ " not found") in
+  Some t.
 
 (* deletes lambdas in front of a term *)
 (* used for product relation function *)
@@ -281,13 +286,13 @@ is in correct order *)
     let prods := fst(decompose_prod_context (remove_lambda transformRel)) in
     tl (rev prods)). *)
 
-Fixpoint tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term := t.
+(* Definition tsl_rec1' (Env Envt: nat -> nat) (E : tsl_table) (t : term) : term := t. *)
 
 Definition tsl_rec1 := tsl_rec1' (fun n => n) (fun n => n).
 
 (* rec, apply list *)
 (* lift everything else by 1 *)
-Fixpoint augment (t:term) : option term :=
+Definition augment (t:term) : option term :=
   match t with 
   | tSort u => Some(tProd nAnon (tRel 0) t)
   | _ => None
@@ -417,23 +422,24 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
           (tProd nAnon 
           (mkApps (lift0 #|args| (applyEnv env (tApp (tInd (mkInd kn i) []) (makeRels mind.(ind_npars))))) (makeRels #|args|)) (* old type with params *)
             (lift0 1 tb))) *)
-
-        let ctor_type := 
-        it_mkProd_or_LetIn paramlist (
-        it_mkProd_or_LetIn (rev args) (
-          tb'
-        )) in
-        mapi 
-          (fun i '(na,ty,n) => (na^(string_of_nat i),ty,n))
-        (repeat 
-        (* [ *)
-        (tsl_ident name, 
-        ctor_type, 
-        #|fst (decompose_prod_context ctor_type)|)
-        (* ] *)
-        #|args|)
-      )
+        let na := tsl_ident name in
+        _)
       ind.(ind_ctors)
+    ).
+    refine(
+        nat_rect (fun _ => list ((ident×term)×nat)) []
+        (fun i acc => 
+          let ctor_type := 
+          it_mkProd_or_LetIn paramlist (
+          it_mkProd_or_LetIn (rev args) (
+            tProd nAnon <% nat %> 
+            (lift0 1 tb')
+          )) in
+          (na^(string_of_nat i), 
+          ctor_type, 
+          #|fst (decompose_prod_context ctor_type)|)
+          :: acc
+        ) #|args|
     ).
 Defined.
 
