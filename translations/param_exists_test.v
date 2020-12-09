@@ -54,8 +54,12 @@ Inductive Rt (X:Type) (Xt:X->Type) : R X -> Type := Tt (xs:List X): EXList X Xt 
 MetaCoq Run (printInductive Rt).
 Fail MetaCoq Run (persistentTranslate R). (* correct but universe error *)
 Fail Print EXR.
+
+Inductive Ft (FT:nat -> Type) (FTT:forall n:nat, FT n -> Type) : F FT -> Type := FIt (x:FT 0): FTT 0 x -> Ft FT FTT (FI FT x).
+MetaCoq Run (printInductive Ft).
 MetaCoq Run (persistentTranslate F).
 Print EXF.
+
 MetaCoq Run (persistentTranslate Ind).
 Print EXInd.
 MetaCoq Run (persistentTranslate Ind2).

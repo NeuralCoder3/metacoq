@@ -292,10 +292,21 @@ is in correct order *)
 
 (* rec, apply list *)
 (* lift everything else by 1 *)
-Definition augment (t:term) : option term :=
+Fixpoint augment (t:term) : option term :=
   match t with 
-  | tSort u => Some(tProd nAnon (tRel 0) t)
+  | tSort u => Some (tLambda nAnon t (tProd nAnon (tRel 0) t))
   (* | tSort u => Some(tProd nAnon (tRel 0) <% Type %>) *)
+  | tProd na t1 t2 => 
+    if augment t2 is Some t2' then
+    (Some
+    (tLambda na t
+    (lift0 1 (tProd na t1
+      (if augment t1 is Some t1' then
+        tProd na (lift0 1 t1') (subst_app(lift0 1 t2') [tApp (tRel 2) [tRel 0]])
+      else
+        subst_app t2' [tApp (tRel 1) [tRel 0]])))
+    ))
+    else None
   | _ => None
   end.
 
@@ -308,7 +319,8 @@ Fixpoint transformParams (env:Env) (E:tsl_table) (params:context) : context*Env 
   | nil => (nil,env)
   | (mkdecl name _ type as decl)::xs =>
     on_fst (cons (vass name (applyEnv env type)))
-    (if augment (applyEnv env type) is Some t' then 
+    (if augment (applyEnv env type) is Some tL then 
+      let t' := subst_app tL [tRel 0] in
       on_fst (cons (vass (name_map tsl_ident name) (t'))) (transformParams (EnvLift0 (EnvUp env) 1) E xs)
     else 
       transformParams (EnvUp env) E xs)
@@ -367,7 +379,7 @@ Fixpoint tsl_rec1' (E : tsl_table) (oldParamCount argCount:nat) (rec:term) (recI
 
   | tInd ind inst => 
     if eq_inductive ind recInd then 
-      Some rec else 
+      Some rec else  
     (lookup_tsl_table E (IndRef ind) )
       (* Some (tApp (tVar "IND") [t;tInd recInd []]) *)
 
