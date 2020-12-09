@@ -56,7 +56,7 @@ Goal forall t n k E, applyEnv (EnvLift E n k) t = lift n k (applyEnv E t).
 Proof.
     intros t.
     induction t using term_forall_list_ind;intros;eauto;cbn.
-    9-10: admit. (* fix *)
+    9-10: admit. (* fix, cofix *)
     all: try rewrite IHt;
         try rewrite IHt1;
         try rewrite IHt2;eauto.

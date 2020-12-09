@@ -352,6 +352,9 @@ Definition removeApps n t :=
 
 Definition idEnv n : nat := n.
 
+(* Print sigT. *)
+Polymorphic Inductive sigT {A : Type} (P : A -> Type) : Type :=
+	existT : forall x : A, P x -> sigT P.
 
 Definition tExists na t1 t2 :=
   tApp (<% @sigT %>) [t1;tLambda na t1 t2].

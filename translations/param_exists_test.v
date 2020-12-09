@@ -4,7 +4,8 @@ Inductive Prod (X Y:Type) := pair (x:X) (y:Y).
 Inductive List (X:Type) := nilL | consL (x:X) (xs:List X).
 Inductive Complex (X Y:Type) := AC (x:X) | BC (x:X) (y1 y2:Y) | CC (y:Y) (c:Complex X Y).
 
-Inductive G (X:Type) := GI (f:nat -> X).
+(* Inductive G (X:Set) := GI (f:nat -> X). *)
+Polymorphic Inductive G (X:Type) := GI (f:nat -> X).
 Inductive R (X:Type) := T (xs:List X).
 Inductive F (FT:nat -> Type) := FI (x:FT 0).
 Inductive Ind (X:Type) : nat -> Type := IndC : Ind X 0.
@@ -14,9 +15,10 @@ Inductive TA (X:Type) : Type := TAC  (x:X) (Y:Type) (y:Y) : TA X.
 Inductive TA2 (X:Type) : Type := TA2C  (Y:Type) (y:Y) : TA2 X.
 (* indices *)
 
-(* Set Universe Polymorphism.
-Unset Strict Universe Declaration.
-Unset Strict Unquote Universe Mode. *)
+(* Set Universe Polymorphism. *)
+(* Unset Strict Universe Declaration. *)
+Unset Strict Unquote Universe Mode.
+
 Load param_exists.
 Definition printInductive {X} (t:X) :=
   q <- tmQuote t;;
@@ -42,13 +44,15 @@ Print EXList.
 MetaCoq Run (persistentTranslate (Complex)).
 Print EXComplex.
 
+(* MetaCoq Run (tmQuote G >>= print_nf). *)
 (* Unset Strict Universe Declaration. *)
 
-Inductive Gt (X:Type) (Xt:X->Type) : G X -> Type := 
+(* Inductive Gt (X:Set) (Xt:X->Type) : G X -> Type := 
   GIt0 (f:nat -> X): @sigT nat (fun (n:nat) => Xt (f n)) -> Gt X Xt (GI X f).
-MetaCoq Run (printInductive Gt).
-Fail MetaCoq Run (persistentTranslate G). (* correct but universe unquoting error *)
-Fail Print EXG. 
+
+MetaCoq Run (printInductive Gt). *)
+MetaCoq Run (persistentTranslate G). (* correct but universe error *)
+Print EXG. 
 
 Inductive Rt (X:Type) (Xt:X->Type) : R X -> Type := Tt (xs:List X): EXList X Xt xs -> Rt X Xt (T X xs).
 MetaCoq Run (printInductive Rt).
