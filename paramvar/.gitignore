@@ -1,0 +1,3 @@
+_CoqProject.in
+!metacoq-config
+website/*.html
