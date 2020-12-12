@@ -21,45 +21,8 @@ Definition getDefTerm (na:ident) : TemplateMonad term :=
     gr <- tmLocate1 na;;
     tmEval lazy (refToTerm gr).
 
-
-(** return all false, exactly one non-dummy, lift env **)
-(* Fixpoint transformParams (env:Env) (E:tsl_table) (dummy: term) (params:context) : list term*list (list term)*Env:=
-  match params with 
-  | nil => (nil,nil,env)
-  | (mkdecl name _ type as decl)::xs =>
-  (fun '(allDummy,xs,env2) =>
-  (** add new argument in front **)
-    let addF := cons (tRel) in
-    (addF allDummy, map addF xs, env2)
-  )
-(if augment (applyEnv env type) is Some tL then 
-    let (allDummy,xs,env2) := transformParams (EnvLift0 (EnvUp env) 1) E xs in
-    let addDummyF :=
-        (* cons (vass (name_map tsl_ident name) (t')) *)
-        cons (vass (name_map tsl_ident name) (tApp dummy [tRel]))
-    in
-    let t' := subst_app tL [tRel 0] in
-    let addF :=
-        (* cons (vass (name_map tsl_ident name) (t')) *)
-        cons (vass (name_map tsl_ident name) (tRel ))
-    in
-    (addDummyF allDummy, (addF allDummy)::(map addDummyF xs),env2)
-else
-    transformParams (EnvUp env) E xs
-)
-  end.
-
-(** auxiliary function to test parameter transform on ∀ terms **)
-Definition paramTermTrans E (t:term) :=
-  let (ctx,tb) := decompose_prod_context t in
-  let (ctx',env) := transformParams (fun n => n) E ctx in
-  it_mkProd_or_LetIn (rev ctx') tb. *)
-
-
-
-
-  (* use more general database and table construction *)
-
+(** split a list into two parts, xs=ys++zs /\ |ys|=n **)
+(** used to split parameter and indices **)
 Fixpoint splitList {X} n (xs:list X) :=
   match n,xs with
   | O,xs => ([],xs)
@@ -69,34 +32,43 @@ Fixpoint splitList {X} n (xs:list X) :=
   | _,_ => ([],xs)
   end.
 
-(* Compute (decompose_prod_context (tProd (nNamed "A") (tRel 0) (tProd (nNamed "B") (tRel 0) (tRel 0)))). *)
 Definition idEnv (n:nat) := n.
 
+(** apply in front **)
 Definition mkAppsInner t xs :=
   match t with
   | tApp tb ys => tApp tb (xs++ys)
   | _ => mkApps t xs
   end.
 
+(** returns the translated inductive applied with dummy arguments except for one predicate **)
+(** the first return value is where all predicates are instantaited with dummy and the list **)
+(** has in each element exactly one predicate which is not instantiated by dummy **)
 Fixpoint dummyApply (tb:term) (ctx:context) (paramExtCount indCount:nat) (dummy:term) : term*list term :=
   match ctx with
   | ((mkdecl na body ty) as x)::xs =>
+  (** test if the type should be augmented (simplified) **)
   let augmented := if augment ty is Some _ then true else false in
+  (** augment remaining params **)
   let (allFalse, termList) := dummyApply tb xs (paramExtCount-(if augmented then 2 else 1)) indCount dummy in
+  (** reference to type argument **)
   let argRelNum := indCount + paramExtCount-1 in
   let argRel := tRel argRelNum in
   if augmented then
+  (** instantiate with dummy **)
     let dummyExtend t := mkAppsInner t [argRel;subst_app dummy [argRel]] in
-    (dummyExtend allFalse,
-      (mkAppsInner allFalse [argRel;tRel (argRelNum-1)])
-      ::(map dummyExtend termList))
+    (dummyExtend allFalse, (** extend all dummy **)
+      (mkAppsInner allFalse [argRel;tRel (argRelNum-1)]) (** extend with new predicate instantiation **)
+      ::(map dummyExtend termList)) (** extend others with dummy **)
   else
     let simpleExtend t := mkAppsInner t [argRel] in
+    (** only add normal argument if not augmentable **)
     (simpleExtend allFalse,map simpleExtend termList)
   | _ => (mkAppsInner tb (makeRels indCount),[])
-  (* | _ => tb *)
+  (** apply all indices in the base case **)
   end.
 
+(** pointwise combination with a connector function **)
 Fixpoint combineTerms (xs:list term) (connF:term->term->term) :=
   match xs with
   | [] => <% Type %>
@@ -104,9 +76,15 @@ Fixpoint combineTerms (xs:list term) (connF:term->term->term) :=
   | x::xs => connF x (combineTerms xs connF)
   end.
 
+(** tranform a binary Coq function to a binary MetaCoq function **)
 Definition termToComb (conn:term) (t1 t2:term) : term :=
   tApp conn [t1;t2].
 
+(** general parametricity combination from basic translations **)
+(** na: name transformation **)
+(** refTrans: transformation of inductive type **)
+(** dummy: instantiation for predicates not under focus **)
+(** conn: connective for singular instantiated terms **)
 Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (conn:term) :=
     id <- getIdent t;;
     q <- tmQuote t;;
@@ -116,22 +94,27 @@ Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (
       match nth_error mind.(ind_bodies) n with
       | Some indb => 
           let ty := indb.(ind_type) in
+          (** retrieve arguments from type information **)
           let (args,tb) := decompose_prod_context ty in
+          (** split into parameters and indices by count of mutual inductive type **)
           let (params,indices) := splitList mind.(ind_npars) args in
+          (** transform parameters with function from exists (is pruned unary parametricity) **)
           let (params',env) := transformParams idEnv params in
+          (** apply with singular predicate **)
+          (** S indices for instance of inductive type **)
           let (allDummy,uniP) := dummyApply refTrans params #|params'| (S #|indices|) dummy in
           let dummyAppTerm := 
             it_mkLambda_or_LetIn (rev params') 
             (it_mkLambda_or_LetIn (rev indices) 
-            (* tLambda (nAnon) (mkApps q (map (lift0 #|indices| (applyEnv env)) (makeRels #|params|) ++ makeRels #|indices|)) *)
-            (tLambda nAnon
-(mkApps (lift0 #|indices| (applyEnv env (tApp q (makeRels mind.(ind_npars))))) (makeRels #|indices|))
+            (tLambda nAnon (** instance of ind type **)
+            (** lifted params (env lifting for transformation), lifted over indices **)
+              (mkApps (lift0 #|indices| (applyEnv env (tApp q (makeRels mind.(ind_npars))))) (makeRels #|indices|))
+              (** combined using conn **)
             (combineTerms uniP (termToComb conn)))
-            (* allDummy *)
             )
           in
           print_nf dummyAppTerm;;
-tmMkDefinition (na id) dummyAppTerm
+          tmMkDefinition (na id) dummyAppTerm
       | None => tmFail ""
       end
     | _ => tmFail ""
@@ -145,87 +128,15 @@ Definition tsl_ident_existsall id := id^"ᴱᴬ".
 MetaCoq Quote Definition dummyTrue := (fun (X:Type) (x:X) => True). (* simplified *)
 MetaCoq Quote Definition dummyFalse := (fun (X:Type) (x:X) => False). (* simplified *)
 
+(** ∃∀ = V ∀∀ with ⊤ for predicates **)
 Definition existsAllParam {A} (t:A) := 
     id <- getIdent t;;
     na <- tmEval lazy (tsl_ident_unparam id);;
     tm <- getDefTerm na;;
   otherParam t tsl_ident_existsall tm dummyTrue <% sum %>.
+(** ∀∃ = Λ ∃∃ with ⊥ for predicates **)
 Definition allExistsParam {A} (t:A) := 
     id <- getIdent t;;
     na <- tmEval lazy (tsl_ident_exists id);;
     tm <- getDefTerm na;;
   otherParam t tsl_ident_allexists tm dummyFalse <% prod %>.
-
-
-MetaCoq Run (persistentExistsTranslate prod).
-MetaCoq Run (allExistsParam prod).
-Print prodᴬᴱ.
-
-MetaCoq Run (persistentTranslate_prune prod true).
-MetaCoq Run (existsAllParam prod).
-Print prodᴱᴬ.
-
-(* Unset Strict Unquote Universe Mode. *)
-
-(* MetaCoq Unquote Definition test :=
-(
-(tLambda (nNamed "A")
-   (<% Type %>)
-   (tLambda (nNamed "Aᴱ")
-      (tProd nAnon (tRel 0)
-         (<% Type %>))
-      (tApp
-         (tInd
-            {|
-            inductive_mind := (MPfile ["param_other"], "listᴱ");
-            inductive_ind := 0 |} [])
-         [tRel 2;
-         tLambda (nNamed "x") (tRel 2) (tInd
-                    {|
-                    inductive_mind := (MPfile ["Logic"; "Init"; "Coq"],
-                                      "True");
-                    inductive_ind := 0 |} [])]
-      )))).
-         tApp
-           (tLambda (nNamed "X")
-              (<% Type %>)
-              (tLambda (nNamed "x") (tRel 0)
-                 (tInd
-                    {|
-                    inductive_mind := (MPfile ["Logic"; "Init"; "Coq"],
-                                      "True");
-                    inductive_ind := 0 |} []))) [tRel 1]])))
-
-). *)
-
- MetaCoq Run (persistentExistsTranslate list).
-
-(* MetaCoq Run (tmQuote (
-  fun (X:Type) (Px:X->Type) => listᴱ X (fun (_:X) => True)
-) >>= print_nf). *)
-
-MetaCoq Run (allExistsParam list).
-Print listᴬᴱ.
-
-Inductive PNT (n:nat) (X:Type) (d:nat) : Type.
-MetaCoq Run (persistentExistsTranslate PNT).
-MetaCoq Run (allExistsParam PNT).
-Print PNTᴬᴱ.
-
-(* Inductive IT (X:Type) : nat -> Type -> Type:= C : IT X 0 nat.
-MetaCoq Run (persistentExistsTranslate IT). *)
-
-
-Inductive IT (X:Type) : Type -> Type:=.
-MetaCoq Run (persistentExistsTranslate IT).
-MetaCoq Run (allExistsParam IT).
-Print ITᴬᴱ.
-
-(* MetaCoq Run (persistentExistsTranslate prod).
-MetaCoq Run (allExistsParam prod).
-Print prodᴬᴱ. *)
-
-(* Print VectorDef.t.
-
-MetaCoq Run (persistentExistsTranslate VectorDef.t).
-MetaCoq Run (allExistsParam list). *)
