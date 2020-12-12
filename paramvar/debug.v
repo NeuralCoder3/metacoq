@@ -1,130 +1,9 @@
+(*** Debug commands for programs and terms ***)
 From MetaCoq.Template Require Import utils All.
 
-(* MetaCoq Run (
-  n <- tmLemma "_" nat;;
-  print_nf n
-).
-Next Obligation.
-exact 42.
-Defined. *)
-
-(* Check tmLemma.
-Goal True.
-  run_template_program(
-  n <- tmLemma "_" nat;;
-  tmPrint n
-  ) (fun a => idtac "A"a). *)
-
-  (* Goal True.
-  assert False as H. *)
-
-
-(* Variable (tmLemma' : ident -> forall (A:Type),TemplateMonad A).
-(* or TemplateMonad' *)
-
-Ltac preprocess' p f :=
-  match p with
-  | tmBind na (tmLemma' ?A) ?FQ => 
-    let name := fresh na in
-    let 
-    assert A as name;[|]
-  | ?Q => idtac "basecase: " Q;
-     (* (run_template_program Q f + idtac "Failure at " Q) *)
-     first [run_template_program Q f | idtac "Failure at " Q;fail 100]
-  end.
-
-
-Ltac preprocess p :=
-  let q := eval lazy in p in
-  preprocess' q f. *)
-
-
-
-
-
-
-
-
-
-
-
-Definition testProgram : TemplateMonad unit :=
-  tmPrint "Start";;
-  (if true then
-    tmPrint "A"
-  else
-    tmPrint "B");;
-  tmPrint "End".
-
-Definition test2 : TemplateMonad unit :=
-  tmPrint "S1";;
-  testProgram;;
-  tmPrint "S2".
-
-(* Print run_template_program. *)
-
-(* Ltac debugger {A} (p:TemplateMonad A) := *)
-(* Ltac debugger' p :=
-  (* idtac p. *)
-  match p with
-  | tmBind ?P ?FQ => idtac "program step: " P;
-    run_template_program P (fun a => debugger' (FQ a))
-  | ?Q => idtac "basecase " Q;
-    run_template_program Q (fun a => idtac "Result" a)
-  end. *)
-
-(* Ltac debugger' p cont :=
-  (* idtac p. *)
-  match p with
-  | tmBind ?P ?FQ => idtac "program step: " P;
-    match type of P with
-    TemplateMonad ?A => 
-    (* idtac A *)
-    debugger' P 42
-    (* (fun (a:A) => ltac:(debugger' (FQ a) cont)) *)
-    (* debugger' p (fun (a:A) => ltac:(debugger' (FQ a) cont)) *)
-    end
-    (* run_template_program P (fun a => debugger' (FQ a)) *)
-  | ?Q => idtac "basecase: " Q
-  (* cont unit constr:(tt) *)
-    (* run_template_program Q (fun a => idtac "Result" a) *)
-  end. *)
-
-(* Compute (ltac:(run_template_program (tmPrint "H") (fun _ => constr:(42)))). *)
-
-(* Ltac debugger' p f :=
-  (* idtac p. *)
-  match p with
-  | tmBind ?P ?FQ => 
-  (* idtac "program step: " P; *)
-    match type of P with
-    TemplateMonad ?A => 
-
-    let f a := 
-      (* idtac "f inside " P; *)
-      let Q := constr:(FQ a) in
-      let Q' := eval lazy in Q in
-      debugger' Q' f
-    in
-    debugger' P f
-
-
-    (* idtac A *)
-    (* let o := debugger' P in
-    (* debugger' (FQ o) *)
-    idtac o *)
-    (* (fun (a:A) => ltac:(debugger' (FQ a) cont)) *)
-    (* debugger' p (fun (a:A) => ltac:(debugger' (FQ a) cont)) *)
-    end
-    (* run_template_program P (fun a => debugger' (FQ a)) *)
-  | ?Q => idtac "basecase: " Q;
-    run_template_program Q f
-
-  (* cont unit constr:(tt) *)
-    (* run_template_program Q (fun a => idtac "Result" a) *)
-  end. *)
-
-
+(** print at which position an error occurs in a TemplateMonad programm **)
+(** does not work with tmDefinition **)
+(** see old commits for more variants **)
 Ltac debugger' p f g :=
   lazymatch p with
   | tmBind ?P ?FQ => 
@@ -135,40 +14,17 @@ Ltac debugger' p f g :=
       let Q := constr:(FQ a) in
       let Q' := eval lazy in Q in
       debugger' Q' g g
-      (* let b := type of a in
-      idtac "step " b *)
-      (* idtac "step: " Q; *)
-      (* does not matter *)
     in
     debugger' P f g
     end
   | ?Q => idtac "basecase: " Q;
-     (* run_template_program Q f *)
   run_template_program Q f
-     (* let g _ := run_template_program Q f in *)
-     (* g tt *)
-     (* let na := fresh "H" in
-      assert A as na;[|f na] *)
-     (* first [g tt | idtac "Failure at " Q;fail 100] *)
   end.
 
-
 Ltac debugger p :=
-  (* let q := eval lazy in p in *)
-  (* let q := eval vm_compute in p in *)
-  (* let q := eval lazy in p in  *)
   let f v := idtac "Return value: " v in
   run_template_program (tmEval cbn p) (fun q => debugger' q f f).
-  (* run_template_program (tmEval cbn p) (fun a => idtac a). *)
-  (* let q := eval lazy in p in 
-  q. *)
-  (* let f a := idtac a in
-  debugger' q f. *)
 
-  (* does not work with tmDefinition *)
-
-(* Variable (tmLemma' : ident -> forall (A:Type),TemplateMonad A).
-Compute ltac:(debugger (a <- tmLemma' "H" nat;;tmPrint a)). *)
 
 Ltac lindebugger' p :=
   match p with
@@ -191,32 +47,13 @@ Ltac lindebugger p :=
   let q := eval lazy in p in
   lindebugger' q.
 
-(* Compute ltac:(lindebugger (test2)). *)
-(* Compute ltac:(debugger (testProgram)). *)
-
-(* Compute ltac:(debugger (test2)). *)
-(* Compute ltac:(debugger (@tmFail unit "End")). *)
+(** call: Compute ltac:(lindebugger (testProgram)). **)
 
 
-(* MetaCoq Run (TC <- Translate emptyTC "list" ;;
-                tmDefinition "list_TC" TC ).
-Inductive rose := node (xs:list rose).
-Fail MetaCoq Run (TC <- Translate list_TC "rose" ;;
-                tmDefinition "rose_TC" TC).
-Compute ltac:(debugger (TC <- Translate list_TC "rose" ;;
-                tmDefinition "rose_TC" TC)). *)
-
-
-
-
-
-
-(* debug printer *)
-
+(** debug messages in terms **)
 Definition debugMessage (m:string) (t:term) :=
     mkApp (tLambda (nNamed m) <% unit %> (lift0 1 t)) <% tt %>.
 
-Search "red" "beta".
 Lemma red_beta' 
   (Σ : global_env) (Γ : context) (na : name) 
   (t b a : term) (l : list term) (x:term):
@@ -225,14 +62,15 @@ Lemma red_beta'
   intros ->;apply red_beta.
 Qed.
 
-
 Lemma subst1Nothing t t2: Ast.wf t -> (lift0 1 t) {0:=t2} = t.
-intros H.
-unfold subst1.
-rewrite simpl_subst;trivial.
-now rewrite lift0_id.
+Proof.
+  intros H.
+  unfold subst1.
+  rewrite simpl_subst;trivial.
+  now rewrite lift0_id.
 Qed.
 
+(** the message does not change meaning of programs **)
 Lemma debugId Σ Γ m t: Ast.wf t -> red Σ Γ (debugMessage m t) t.
 Proof.
     intros H.
@@ -242,21 +80,14 @@ Proof.
     now rewrite subst1Nothing.
 Qed.
 
-Print term.
-Print monad_iter.
-
-Print mfixpoint.
-Print def.
 
 
 From MetaCoq Require Import Checker.
-(* Print Checker.eq_term. *)
 
-(* Existing Instance config.default_checker_flags. *)
 Definition dcf := config.default_checker_flags.
 Definition ig := init_graph.
 
-
+(** print all messages in a term **)
 Fixpoint debugPrint (t:term) : TemplateMonad unit :=
   match t with
   | tEvar _ tl => monad_iter debugPrint tl
@@ -282,4 +113,4 @@ Fixpoint debugPrint (t:term) : TemplateMonad unit :=
   | _ => tmReturn tt
   end.
 
-MetaCoq Run (debugPrint (tLambda nAnon <% nat %> (debugMessage "inner body" <% bool %>))).
+(* MetaCoq Run (debugPrint (tLambda nAnon <% nat %> (debugMessage "inner body" <% bool %>))). *)

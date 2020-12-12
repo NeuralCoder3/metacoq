@@ -9,7 +9,7 @@ Definition default_term := tVar "constant_not_found".
 Definition debug_term msg:= tVar ("debug: " ^ msg).
 
 
-Definition tsl_ident id := "EX"^id . (* ∃∃ *)
+Definition tsl_ident id := id^"ᴱ".
 
 
 

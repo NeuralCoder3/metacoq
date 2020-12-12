@@ -445,7 +445,7 @@ Definition checkTranslation (ΣE:tsl_context) (ref:global_reference) : TemplateM
           match opt with (** match over custom option type for inference results **)
           | my_Some x => 
             let Σ' := fst ΣE in
-            let E' := ((@content _ x)  ++ (snd ΣE))%list in (** TODO: can contain duplicates (see below) **)
+            let E' := ((@content _ x)  ++ (snd ΣE))%list in 
             Σ' <- tmEval lazy Σ' ;;
             E' <- tmEval lazy E' ;;
             ret (Σ', E')
@@ -506,15 +506,9 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   tmMsg ("Complete Identifier: "^id);;
   tmMsg ("Short Identifier: "^idname);;
   tc' <- (if prune then @Translate param_prune else @Translate param) tc id;; (** translate new definition **)
-  (** TODO: chose pruning translation **)
 
   gr <- tmLookup t;;
   (** extend table **)
-  (** TODO: too large only needs new part **)
-  (** easiest way would be to undup (or track what is new) **)
-  (** variant 1: new-old **)
-  (** variant 2: undup in creation **)
-  (** variant 3: tracking **)
       nameString <- tmEval lazy (append idname "_tableLookup");;
       newName <- tmFreshName nameString;;
       tmDefinition newName (

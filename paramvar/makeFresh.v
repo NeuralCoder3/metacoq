@@ -1,12 +1,13 @@
+(*** Replaces identifiers in inductive types with fresh names ***)
 
 From MetaCoq.Template Require Import utils All.
-
 
 Definition mkFreshName (n:name) : TemplateMonad name :=
   match n with
   | nAnon => tmReturn nAnon
   | nNamed m => m' <- tmFreshName m;; tmReturn (nNamed m')
   end.
+(** replaces the name in a declaration **)
 Definition mkFreshContextDecl (x:context_decl) : TemplateMonad context_decl :=
   name' <- mkFreshName (decl_name x);;
   tmReturn {|
@@ -15,6 +16,7 @@ Definition mkFreshContextDecl (x:context_decl) : TemplateMonad context_decl :=
     decl_type := decl_type x
   |}.
 
+  (* replaces the inductive name, the names of projections and all constructor names *)
 Definition mkFreshOneInd (x:one_inductive_body) : TemplateMonad one_inductive_body :=
   ident' <- tmFreshName (ind_name x);;
   ctors' <- monad_map (fun '(id,t,n) => id' <- tmFreshName id;;tmReturn ((id',t),n)) (ind_ctors x);;
@@ -27,6 +29,7 @@ Definition mkFreshOneInd (x:one_inductive_body) : TemplateMonad one_inductive_bo
     ind_projs := projs'
   |}.
 
+(* replaces the names of all parameters to avoid confusion and replaces names in each body *)
 Definition mkFreshMutual (x:mutual_inductive_body) : TemplateMonad mutual_inductive_body :=
   param' <- monad_map mkFreshContextDecl (ind_params x);;
   bodies' <- monad_map mkFreshOneInd (ind_bodies x);;

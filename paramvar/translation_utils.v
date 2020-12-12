@@ -2,8 +2,8 @@
 From MetaCoq.Template Require Import utils All.
 Require Import MetaCoq.Checker.All.
 
-
-(* Should be in AstUtils probably *)
+(** applies a term with direct subsitution while creations **)
+(** use case: subst_app (λ x. x) [y] = y **)
 Fixpoint subst_app (t : term) (us : list term) : term :=
   match t, us with
   | tLambda _ A t, u :: us => subst_app (t {0 := u}) us
@@ -11,7 +11,7 @@ Fixpoint subst_app (t : term) (us : list term) : term :=
   | _, _ => mkApps t us
   end.
 
-
+(** lookup translated terms (types via tInd) **)
 Definition tsl_table := list (global_reference * term).
 
 Fixpoint lookup_tsl_table (E : tsl_table) (gr : global_reference)
@@ -88,7 +88,6 @@ Definition tsl_name tsl_ident n :=
 
 Definition tmDebug {A} : A -> TemplateMonad unit
   := print_nf.
-  (* := tmPrint. *)
   (* := fun _ => ret tt. *)
 
 
@@ -115,7 +114,6 @@ Definition monomorph_globref_term (gr : global_reference) : term :=
 From MetaCoq.Translations Require Import makeFresh.
 
 
-(* Definition Translate' {tsl : Translation} (ΣE : tsl_context) (id : ident) (make:bool) *)
 Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
   : TemplateMonad tsl_context :=
   tmDebug ("Translate " ^ id);;
@@ -133,11 +131,7 @@ Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
       print_nf e ;;
       fail_nf ("Translation error during the translation of the inductive " ^ id)
     | Success (E, decls) =>
-      (* monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x) decls ;; *)
-      (* monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x ;; 
-        if make then tmMkInductive' x else ret tt) decls ;; *)
       monad_iter (fun y => x <- mkFreshMutual y;; tmDebug x ;; tmMkInductive' x ) decls ;;
-      (* monad_iter (fun x => tmDebug x ;; tmMkInductive' x) decls ;; *)
       let Σ' := add_global_decl (kn,InductiveDecl d) (fst ΣE) in
       let E' := (E ++ snd ΣE) in
       Σ' <- tmEval lazy Σ' ;;
@@ -180,10 +174,6 @@ Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident)
       end
     end
   end.
-
-(* Definition Translate {tsl : Translation} (ΣE : tsl_context) (id : ident) 
-  : TemplateMonad tsl_context :=
-@Translate' tsl ΣE id true. *)
 
 Definition Implement {tsl : Translation} (ΣE : tsl_context)
            (id : ident) (A : Type)

@@ -1,21 +1,17 @@
-(*
-Pretty print for terms with bruijn indices
-(it might be easier to go the other way
-and print coq terms with indices)
+(*** Pretty print for terms with bruijn indices ***)
+(**
 
 For a complete pretty print with names
 unquote and use Coqs Print Command
 
 It is useful as debugging if a term does not type
- *)
+
+There is the pure pretty print function but
+this function uses too little parenthesis 
+and does not print tRels and tInd in a useful way
+ **)
 
 Require Import MetaCoq.Template.All.
-(* From MetaCoq.PCUIC Require Import PCUICAst PCUICAstUtils PCUICInduction
-     PCUICLiftSubst PCUICEquality
-     PCUICUnivSubst PCUICTyping PCUICGeneration. *)
-
-
-(* From MetaCoq.PCUIC Require Import TemplateToPCUIC. *)
 
 Require Import List String.
 Require Import Ascii.
@@ -25,6 +21,7 @@ Import ListNotations MonadNotation Nat.
 Definition ascii_to_string (a:ascii) : string := String a (EmptyString).
 Definition natToChar (n:nat) : ascii := ascii_of_nat(48+n).
 
+(** could use string_of_nat **)
 Program Fixpoint natToString (n:nat) {measure n} : string :=
   match leb n 9 with
     true =>
@@ -42,6 +39,7 @@ Next Obligation.
 Qed.
 
 Infix ":s" := String (at level 73).
+(** normally ^ **)
 Infix "+s" := append (at level 72).
 Definition linebreak := ascii_to_string(ascii_of_nat 10).
 
@@ -51,7 +49,7 @@ Definition join (xs:list string) : string :=
 Require Import String.
 Open Scope string_scope.
 
-(* needed for mutual inductive types *)
+(** needed for mutual inductive types **)
 Definition getInductiveName (ind:kername) (indIndex:nat) :TemplateMonad string :=
   ind <- tmQuoteInductive ind;;
   tmEval lazy match nth_error (ind).(ind_bodies) indIndex with
@@ -78,10 +76,7 @@ Definition nameToString (s:name) : string :=
 Definition concatString (xs:list string) : string :=
   fold_left (fun a b => a +s b) xs "".
 
-(* Print kername.
-Print ident.
-Print tmQuoteInductive. *)
-
+(** auxiliary function to generate the tring **)
 Fixpoint bruijn_print_aux (t:term) : TemplateMonad string :=
   match t with
   | tRel n => tmReturn("R" :s (natToString n))
@@ -137,15 +132,8 @@ Fixpoint bruijn_print_aux (t:term) : TemplateMonad string :=
   | _ => tmReturn "TODO"
   end.
 
-
-
-
+(** evalute and print, it is important to use lazy evaluation **)
 Definition bruijn_print (t:term) : TemplateMonad unit :=
   s <- bruijn_print_aux t;;
   val <- tmEval lazy s;;
   tmMsg val.
-
-MetaCoq Quote Definition printTest := 
-  (forall (P:nat->Prop) (H0:P 0) (HS: forall n, P n -> P (S n)) (n:nat), P n).
-
-MetaCoq Run (bruijn_print <% 0=0 -> Type %>).
