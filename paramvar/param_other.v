@@ -78,22 +78,34 @@ Definition mkAppsInner t xs :=
   | _ => mkApps t xs
   end.
 
-Fixpoint dummyApply (tb:term) (ctx:context) (paramExtCount indCount:nat) (dummy:term) : term :=
+Fixpoint dummyApply (tb:term) (ctx:context) (paramExtCount indCount:nat) (dummy:term) : term*list term :=
   match ctx with
   | ((mkdecl na body ty) as x)::xs =>
-  if augment ty is Some _ then
-  (* if eq_decl x y then
-    mkApp (dummyApply tb xs paramCount indCount dummy) (tRel (indCount + #|ctxExt|))
-  else *)
-    mkAppsInner (dummyApply tb xs (paramExtCount-2) indCount dummy) 
-        [tRel (indCount + paramExtCount-1);
-        (* mkApp dummy (tRel (indCount + paramExtCount-1))] *)
-        subst_app dummy [tRel (indCount + paramExtCount-1)]]
+  let augmented := if augment ty is Some _ then true else false in
+  let (allFalse, termList) := dummyApply tb xs (paramExtCount-(if augmented then 2 else 1)) indCount dummy in
+  let argRelNum := indCount + paramExtCount-1 in
+  let argRel := tRel argRelNum in
+  if augmented then
+    let dummyExtend t := mkAppsInner t [argRel;subst_app dummy [argRel]] in
+    (dummyExtend allFalse,
+      (mkAppsInner allFalse [argRel;tRel (argRelNum-1)])
+      ::(map dummyExtend termList))
   else
-    mkAppsInner (dummyApply tb xs (paramExtCount-1) indCount dummy) [tRel (indCount + paramExtCount-1)]
-  | _ => mkAppsInner tb (makeRels indCount)
+    let simpleExtend t := mkAppsInner t [argRel] in
+    (simpleExtend allFalse,map simpleExtend termList)
+  | _ => (mkAppsInner tb (makeRels indCount),[])
   (* | _ => tb *)
   end.
+
+Fixpoint combineTerms (xs:list term) (connF:term->term->term) :=
+  match xs with
+  | [] => <% Type %>
+  | [x] => x
+  | x::xs => connF x (combineTerms xs connF)
+  end.
+
+Definition termToComb (conn:term) (t1 t2:term) : term :=
+  tApp conn [t1;t2].
 
 Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (conn:term) :=
     id <- getIdent t;;
@@ -107,10 +119,16 @@ Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (
           let (args,tb) := decompose_prod_context ty in
           let (params,indices) := splitList mind.(ind_npars) args in
           let (params',env) := transformParams idEnv params in
+          let (allDummy,uniP) := dummyApply refTrans params #|params'| (S #|indices|) dummy in
           let dummyAppTerm := 
             it_mkLambda_or_LetIn (rev params') 
             (it_mkLambda_or_LetIn (rev indices) 
-            (dummyApply refTrans params #|params'| #|indices| dummy))
+            (* tLambda (nAnon) (mkApps q (map (lift0 #|indices| (applyEnv env)) (makeRels #|params|) ++ makeRels #|indices|)) *)
+            (tLambda nAnon
+(mkApps (lift0 #|indices| (applyEnv env (tApp q (makeRels mind.(ind_npars))))) (makeRels #|indices|))
+            (combineTerms uniP (termToComb conn)))
+            (* allDummy *)
+            )
           in
           print_nf dummyAppTerm;;
 tmMkDefinition (na id) dummyAppTerm
@@ -125,7 +143,7 @@ Definition tsl_ident_allexists id := id^"ᴬᴱ".
 Definition tsl_ident_existsall id := id^"ᴱᴬ".
 
 MetaCoq Quote Definition dummyTrue := (fun (X:Type) (x:X) => True). (* simplified *)
-MetaCoq Quote Definition dummyFalse := (fun (X:Type) (x:X) => True). (* simplified *)
+MetaCoq Quote Definition dummyFalse := (fun (X:Type) (x:X) => False). (* simplified *)
 
 Definition existsAllParam {A} (t:A) := 
     id <- getIdent t;;
@@ -137,6 +155,15 @@ Definition allExistsParam {A} (t:A) :=
     na <- tmEval lazy (tsl_ident_exists id);;
     tm <- getDefTerm na;;
   otherParam t tsl_ident_allexists tm dummyFalse <% prod %>.
+
+
+MetaCoq Run (persistentExistsTranslate prod).
+MetaCoq Run (allExistsParam prod).
+Print prodᴬᴱ.
+
+MetaCoq Run (persistentTranslate_prune prod true).
+MetaCoq Run (existsAllParam prod).
+Print prodᴱᴬ.
 
 (* Unset Strict Unquote Universe Mode. *)
 
@@ -171,7 +198,7 @@ Definition allExistsParam {A} (t:A) :=
 
 ). *)
 
-(* MetaCoq Run (persistentExistsTranslate list).
+ MetaCoq Run (persistentExistsTranslate list).
 
 (* MetaCoq Run (tmQuote (
   fun (X:Type) (Px:X->Type) => listᴱ X (fun (_:X) => True)
@@ -192,11 +219,11 @@ MetaCoq Run (persistentExistsTranslate IT). *)
 Inductive IT (X:Type) : Type -> Type:=.
 MetaCoq Run (persistentExistsTranslate IT).
 MetaCoq Run (allExistsParam IT).
-Print ITᴬᴱ. *)
+Print ITᴬᴱ.
 
-MetaCoq Run (persistentExistsTranslate prod).
+(* MetaCoq Run (persistentExistsTranslate prod).
 MetaCoq Run (allExistsParam prod).
-Print prodᴬᴱ.
+Print prodᴬᴱ. *)
 
 (* Print VectorDef.t.
 
