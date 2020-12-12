@@ -11,4 +11,6 @@ makeFresh.v
 translation_utils.v
 param_unary.v
 param_exists.v
+param_other.v
+param_all.v
 
