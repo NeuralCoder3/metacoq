@@ -101,7 +101,6 @@ Inductive isConstant : term -> Type :=
 | constIsConstant s univs: isConstant (tConst s univs)
 | indIsConstant i univs: isConstant (tInd i univs)
 | constructIsConstant i n univs: isConstant (tConstruct i n univs).
-Hint Constructors isConstant.
 
 Definition getRef (t:term) {h:isConstant t} : global_reference.
 inversion h.

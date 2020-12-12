@@ -1,4 +1,7 @@
+(**  **)
+
 (*** Pretty print for terms with bruijn indices ***)
+
 (**
 
 For a complete pretty print with names

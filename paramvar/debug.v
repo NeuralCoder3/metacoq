@@ -1,5 +1,9 @@
+(**  **)
+
 (*** Debug commands for programs and terms ***)
+
 From MetaCoq.Template Require Import utils All.
+
 
 (** print at which position an error occurs in a TemplateMonad programm **)
 (** does not work with tmDefinition **)
