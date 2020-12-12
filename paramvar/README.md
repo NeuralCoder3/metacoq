@@ -15,9 +15,12 @@ Tests are showcased in test/
 | translation_utils | General translation interface for terms and types. Copied from translations and changed to generate fresh names |
 | param_unary       | Unary parametricity translation with pruning and  |
 | param_exists      | ∃∃ translation of types |
-| --- | --- |
-| Notation | TODO |
-| param_other | TODO |
+| param_other | ∀∃ and ∃∀ translations |
+| param_all | combined commands, user interface and notations |
+| | |
+| param_eq | connection between lifting and environments |
+| param_comp | compares legacy unary parametricity and new version |
+| param_exists_test | tests for ∃∃ |
 
 Extensive comments are in the files.
 For the ideas behind ∀∀, ∀∃, ∃∀ and ∃∃, one can look at this [note](https://nightly.link/NeuralCoder3/container/workflows/main/main/PDF.zip).
