@@ -1,6 +1,6 @@
 (**  **)
 
-(*** ∀∃ and ∃∀ translation expressed by ∃∃ and ∀∀ ***)
+(*** param_other: ∀∃ and ∃∀ translation expressed by ∃∃ and ∀∀ ***)
 
 From MetaCoq.Template Require Import utils All.
 From MetaCoq.Translations Require Import translation_utils param_unary param_exists.

@@ -1,6 +1,6 @@
 (** Distributed under the terms of the MIT license. **)
 
-(*** utils for general translations of inductive types ***)
+(*** translation_utils: utils for general translations of inductive types ***)
 
 From MetaCoq.Template Require Import utils All.
 Require Import MetaCoq.Checker.All.

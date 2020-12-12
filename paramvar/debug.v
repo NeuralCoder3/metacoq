@@ -1,6 +1,6 @@
 (**  **)
 
-(*** Debug commands for programs and terms ***)
+(*** debug: Debug commands for programs and terms ***)
 
 From MetaCoq.Template Require Import utils All.
 

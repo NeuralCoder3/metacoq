@@ -1,6 +1,6 @@
 (**  **)
 
-(*** Lemmas to connect unary parametricity versions ***)
+(*** param_eq: Lemmas to connect unary parametricity versions ***)
 
 From MetaCoq.Template Require Import utils All.
 From MetaCoq.Translations Require Import translation_utils.

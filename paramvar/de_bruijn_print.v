@@ -1,6 +1,6 @@
 (**  **)
 
-(*** Pretty print for terms with bruijn indices ***)
+(*** de_bruijn_print: Pretty print for terms with bruijn indices ***)
 
 (**
 

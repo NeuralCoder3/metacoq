@@ -1,6 +1,6 @@
 (**  **)
 
-(*** ∃∃ translation of inductive types ***)
+(*** param_exists: ∃∃ translation of inductive types ***)
 From MetaCoq.Template Require Import utils All.
 From MetaCoq.Translations Require Import translation_utils param_unary.
 From MetaCoq.Template Require Import Pretty.

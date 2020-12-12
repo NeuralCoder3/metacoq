@@ -1,6 +1,6 @@
 (**  **)
 
-(*** tests for ∃∃ translation ***)
+(*** param_exists_test: tests for ∃∃ translation ***)
 
 Inductive augTest : Type := Aug (n:nat) (b:bool).
 Inductive Prod1 (X:Type) := Con (x1 x2:X).

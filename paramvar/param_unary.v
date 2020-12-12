@@ -1,6 +1,6 @@
 (** Distributed under the terms of the MIT license. **)
 
-(*** Unary parametricity translation ***)
+(*** param_unary: Unary parametricity translation ***)
 
 From MetaCoq.Template Require Import utils All.
 From MetaCoq.Translations Require Import translation_utils.

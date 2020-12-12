@@ -1,6 +1,6 @@
 (**  **)
 
-(*** showcase of feature of the translation ***)
+(*** showcase: showcase of feature of the translation ***)
 From MetaCoq.Translations Require Import param_all.
 Unset Strict Unquote Universe Mode.
 

@@ -15,7 +15,9 @@ param_other.v
 param_all.v
 
 
-# param_comp.v
-# param_eq.v
-# param_exists_test.v
-# param_test.v
+param_comp.v
+param_eq.v
+param_exists_test.v
+param_test.v
+param_other_test.v
+showcase.v

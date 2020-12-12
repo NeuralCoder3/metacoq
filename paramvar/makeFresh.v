@@ -1,6 +1,6 @@
 (**  **)
 
-(*** Replaces identifiers in inductive types with fresh names ***)
+(*** makeFresh: Replaces identifiers in inductive types with fresh names ***)
 
 From MetaCoq.Template Require Import utils All.
 

@@ -1,6 +1,6 @@
 (**  **)
 
-(*** Top level interface with user commands and combination of translations ***)
+(*** param_all: Top level interface with user commands and combination of translations ***)
 
 From MetaCoq.Template Require Import utils All.
 From MetaCoq.Translations Require Import translation_utils.

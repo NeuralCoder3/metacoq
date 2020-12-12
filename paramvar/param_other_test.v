@@ -1,6 +1,6 @@
 (**  **)
 
-(*** tests for ∀∃ and ∃∀ ***)
+(*** param_other_test: tests for ∀∃ and ∃∀ ***)
 Load param_other.
 
 MetaCoq Run (persistentExistsTranslate prod).

@@ -1,6 +1,6 @@
 (**  **)
 
-(*** compares old parametricity version with the new one ***)
+(*** param_comp: compares old parametricity version with the new one ***)
 
 Load param_unary.
 

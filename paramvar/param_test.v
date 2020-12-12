@@ -1,6 +1,6 @@
 (** **)
 
-(*** tests for unary parametricity translation ***)
+(*** param_test: tests for unary parametricity translation ***)
 
 Load param_unary.
 
