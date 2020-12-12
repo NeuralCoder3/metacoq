@@ -69,11 +69,11 @@ Fixpoint dummyApply (tb:term) (ctx:context) (paramExtCount indCount:nat) (dummy:
   end.
 
 (** pointwise combination with a connector function **)
-Fixpoint combineTerms (xs:list term) (connF:term->term->term) :=
+Fixpoint combineTerms base (xs:list term) (connF:term->term->term) :=
   match xs with
-  | [] => <% Type %>
+  | [] => base
   | [x] => x
-  | x::xs => connF x (combineTerms xs connF)
+  | x::xs => connF x (combineTerms base xs connF)
   end.
 
 (** tranform a binary Coq function to a binary MetaCoq function **)
@@ -85,7 +85,7 @@ Definition termToComb (conn:term) (t1 t2:term) : term :=
 (** refTrans: transformation of inductive type **)
 (** dummy: instantiation for predicates not under focus **)
 (** conn: connective for singular instantiated terms **)
-Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (conn:term) :=
+Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (conn:term) (base:term) :=
     id <- getIdent t;;
     q <- tmQuote t;;
     match q with
@@ -110,7 +110,7 @@ Definition otherParam {A} (t:A) (na:ident->ident) (refTrans:term) (dummy:term) (
             (** lifted params (env lifting for transformation), lifted over indices **)
               (mkApps (lift0 #|indices| (applyEnv env (tApp q (makeRels mind.(ind_npars))))) (makeRels #|indices|))
               (** combined using conn **)
-            (combineTerms uniP (termToComb conn)))
+            (combineTerms base uniP (termToComb conn)))
             )
           in
           print_nf dummyAppTerm;;
@@ -133,10 +133,10 @@ Definition existsAllParam {A} (t:A) :=
     id <- getIdent t;;
     na <- tmEval lazy (tsl_ident_unparam id);;
     tm <- getDefTerm na;;
-  otherParam t tsl_ident_existsall tm dummyTrue <% sum %>.
+  otherParam t tsl_ident_existsall tm dummyTrue <% sum %> <% False %>.
 (** ∀∃ = Λ ∃∃ with ⊥ for predicates **)
 Definition allExistsParam {A} (t:A) := 
     id <- getIdent t;;
     na <- tmEval lazy (tsl_ident_exists id);;
     tm <- getDefTerm na;;
-  otherParam t tsl_ident_allexists tm dummyFalse <% prod %>.
+  otherParam t tsl_ident_allexists tm dummyFalse <% prod %> <% True %>.
