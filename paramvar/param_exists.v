@@ -11,7 +11,8 @@ Definition default_term := tVar "constant_not_found".
 Definition debug_term msg:= tVar ("debug: " ^ msg).
 
 
-Definition tsl_ident id := id^"ᴱ".
+Definition tsl_ident_exists id := id^"ᴱ".
+Definition tsl_ident := tsl_ident_exists.
 
 (***
 application of a lifting environment to a term
@@ -49,22 +50,22 @@ Definition on_fst {X Y Z} (f:X->Z) (p:X*Y) := match p with (x,y) => (f x,y) end.
 Definition name_map f (na:name) := if na is nNamed id then nNamed (f id) else nAnon.
 
 (** transforms a list of parameters and add new ones (the predicates) if possible **)
-Fixpoint transformParams (env:Env) (E:tsl_table) (params:context) : context*Env :=
+Fixpoint transformParams (env:Env) (params:context) : context*Env :=
   match params with 
   | nil => (nil,env)
   | (mkdecl name _ type as decl)::xs =>
     on_fst (cons (vass name (applyEnv env type)))
     (if augment (applyEnv env type) is Some tL then 
       let t' := subst_app tL [tRel 0] in
-      on_fst (cons (vass (name_map tsl_ident name) (t'))) (transformParams (EnvLift0 (EnvUp env) 1) E xs)
+      on_fst (cons (vass (name_map tsl_ident name) (t'))) (transformParams (EnvLift0 (EnvUp env) 1) xs)
     else 
-      transformParams (EnvUp env) E xs)
+      transformParams (EnvUp env) xs)
   end.
 
 (** auxiliary function to test parameter transform on ∀ terms **)
-Definition paramTermTrans E (t:term) :=
+Definition paramTermTrans (E:tsl_table) (t:term) :=
   let (ctx,tb) := decompose_prod_context t in
-  let (ctx',env) := transformParams (fun n => n) E ctx in
+  let (ctx',env) := transformParams (fun n => n) ctx in
   it_mkProd_or_LetIn (rev ctx') tb.
 
 (** auxiliary function to apply all parameters in correct order **)
@@ -150,7 +151,7 @@ Definition tsl_mind_body (prune:bool) (E : tsl_table) (mp : modpath) (kn : kerna
   (** for a pure unary parametricity translation even
   mind.(ind_params) ++ mind.(ind_params) workds **)
  (** the universe of the inductive and the variance are not changed by the translation **)
-  set(paramlist_env := on_fst rev (transformParams (fun n => n) E (rev mind.(ind_params)))).
+  set(paramlist_env := on_fst rev (transformParams (fun n => n) (rev mind.(ind_params)))).
   destruct paramlist_env as [paramlist env].
   refine (_, [{| ind_npars := #|paramlist|;
                  ind_params := paramlist;
@@ -297,7 +298,7 @@ Definition checkTranslation (ΣE:tsl_context) (ref:global_reference) : TemplateM
   from it to the context **)
 (** for additional creation of missing translations,
 use TranslateRec with constructed table as seed **)
-Definition ConstructTable {A} (t:A) : TemplateMonad tsl_context :=
+Definition ConstructExistsTable {A} (t:A) : TemplateMonad tsl_context :=
   p <- tmQuoteRec t ;;
   tmPrint "~~~~~~~~~~~~~~~~~~" ;;
   monad_fold_right (fun ΣE '(kn, decl) =>
@@ -339,13 +340,13 @@ Definition tmLookup {A} (t:A) : TemplateMonad global_reference :=
   getIdentComplete t >>= tmLocate1.
 
 (** generates a table with all translations possibly needed for lookup **)
-Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_context :=
-  tc <- ConstructTable t;; (** get table **)
+Definition persistentExistsTranslate {A} (t:A) : TemplateMonad tsl_context :=
+  tc <- ConstructExistsTable t;; (** get table **)
   id <- getIdentComplete t;;
   idname <- getIdent t;;
   tmMsg ("Complete Identifier: "^id);;
   tmMsg ("Short Identifier: "^idname);;
-  tc' <- (@Translate param) tc id;; (** translate new definition **)
+  tc' <- (@Translate existparam) tc id;; (** translate new definition **)
 
   gr <- tmLookup t;;
   (** extend table **)
@@ -362,4 +363,4 @@ Definition persistentTranslate_prune {A} (t:A) (prune:bool) : TemplateMonad tsl_
   .
 
 Definition persistentTranslate {A} (t:A) : TemplateMonad tsl_context :=
-  persistentTranslate_prune t false.
+  persistentExistsTranslate t.

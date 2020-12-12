@@ -16,6 +16,8 @@ Definition debug_term msg:= tVar ("debug: " ^ msg).
   (** Definition todo := tVar. **)
 
 
+Definition tsl_ident_unparam id := id^"ᵗ".
+Definition tsl_ident := tsl_ident_unparam.
 
 
 
