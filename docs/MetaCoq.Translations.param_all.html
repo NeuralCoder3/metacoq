@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+</div>
+
+<div class="doc">
+ 
+<div class="paragraph"> </div>
+
+<a id="lab8"></a><h1 class="section">param_all: Top level interface with user commands and combination of translations</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">MetaCoq.Template</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">utils</span> <span class="id" title="library">All</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">MetaCoq.Translations</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="MetaCoq.Translations.translation_utils.html#"><span class="id" title="library">translation_utils</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">MetaCoq.Template</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Pretty</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">MetaCoq.Translations</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="MetaCoq.Translations.param_unary.html#"><span class="id" title="library">param_unary</span></a> <a class="idref" href="MetaCoq.Translations.param_exists.html#"><span class="id" title="library">param_exists</span></a> <a class="idref" href="MetaCoq.Translations.param_other.html#"><span class="id" title="library">param_other</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+define one translation to be an alias to another translation  general enough for arbitrary alias definitions  with (fun _ =&gt; "A") 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="aliasDef" class="idref" href="#aliasDef"><span class="id" title="definition">aliasDef</span></a> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>} (<a id="t:2" class="idref" href="#t:2"><span class="id" title="binder">t</span></a>:<a class="idref" href="MetaCoq.Translations.param_all.html#A:1"><span class="id" title="variable">A</span></a>) (<a id="from:3" class="idref" href="#from:3"><span class="id" title="binder">from</span></a> <a id="to:4" class="idref" href="#to:4"><span class="id" title="binder">to</span></a>:<span class="id" title="definition">ident</span><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><span class="id" title="definition">ident</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="id:5" class="idref" href="#id:5"><span class="id" title="binder">id</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.param_exists.html#getIdent"><span class="id" title="definition">getIdent</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:2"><span class="id" title="variable">t</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="na:6" class="idref" href="#na:6"><span class="id" title="binder">na</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmEval</span> <span class="id" title="constructor">lazy</span> (<a class="idref" href="MetaCoq.Translations.param_all.html#from:3"><span class="id" title="variable">from</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:5"><span class="id" title="variable">id</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="tm:7" class="idref" href="#tm:7"><span class="id" title="binder">tm</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.param_other.html#getDefTerm"><span class="id" title="definition">getDefTerm</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#na:6"><span class="id" title="variable">na</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">tmMkDefinition</span> (<a class="idref" href="MetaCoq.Translations.param_all.html#to:4"><span class="id" title="variable">to</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:5"><span class="id" title="variable">id</span></a>) <a class="idref" href="MetaCoq.Translations.param_all.html#tm:7"><span class="id" title="variable">tm</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+run all translations together 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="translateAll" class="idref" href="#translateAll"><span class="id" title="definition">translateAll</span></a> {<a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a>} (<a id="t:9" class="idref" href="#t:9"><span class="id" title="binder">t</span></a>:<a class="idref" href="MetaCoq.Translations.param_all.html#A:8"><span class="id" title="variable">A</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_unary.html#persistentTranslate_prune"><span class="id" title="definition">persistentTranslate_prune</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_other.html#existsAllParam"><span class="id" title="definition">existsAllParam</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_other.html#allExistsParam"><span class="id" title="definition">allExistsParam</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_all.html#aliasDef"><span class="id" title="definition">aliasDef</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a> <a class="idref" href="MetaCoq.Translations.param_unary.html#tsl_ident_unparam"><span class="id" title="definition">tsl_ident_unparam</span></a> <a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_allall"><span class="id" title="definition">tsl_ident_allall</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="MetaCoq.Translations.param_all.html#aliasDef"><span class="id" title="definition">aliasDef</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a> <a class="idref" href="MetaCoq.Translations.param_exists.html#tsl_ident_exists"><span class="id" title="definition">tsl_ident_exists</span></a> <a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_existsexists"><span class="id" title="definition">tsl_ident_existsexists</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="id:10" class="idref" href="#id:10"><span class="id" title="binder">id</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.param_exists.html#getIdent"><span class="id" title="definition">getIdent</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="s:11" class="idref" href="#s:11"><span class="id" title="binder">s</span></a> := "Derived "<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_unary.html#tsl_ident_unparam"><span class="id" title="definition">tsl_ident_unparam</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>"="<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_allall"><span class="id" title="definition">tsl_ident_allall</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>", "<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_allexists"><span class="id" title="definition">tsl_ident_allexists</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>", "<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_existsall"><span class="id" title="definition">tsl_ident_existsall</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>", and "<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_exists.html#tsl_ident_exists"><span class="id" title="definition">tsl_ident_exists</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>"="<span class="id" title="notation">^</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="MetaCoq.Translations.param_other.html#tsl_ident_existsexists"><span class="id" title="definition">tsl_ident_existsexists</span></a> <a class="idref" href="MetaCoq.Translations.param_all.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">)^</span>"."<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">tmMsg</span> <a class="idref" href="MetaCoq.Translations.param_all.html#s:11"><span class="id" title="variable">s</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Userinterface = notations for the commands 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="getName" class="idref" href="#getName"><span class="id" title="definition">getName</span></a> (<a id="x:12" class="idref" href="#x:12"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) :=<br/>
+&nbsp;&nbsp;<a id="x:13" class="idref" href="#x:13"><span class="id" title="binder">x</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmEval</span> <span class="id" title="constructor">cbv</span> <a class="idref" href="MetaCoq.Translations.param_all.html#x:12"><span class="id" title="variable">x</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<a id="t:14" class="idref" href="#t:14"><span class="id" title="binder">t</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmQuote</span> <a class="idref" href="MetaCoq.Translations.param_all.html#x:13"><span class="id" title="variable">x</span></a><span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="MetaCoq.Translations.param_all.html#t:14"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span> <br/>
+&nbsp;&nbsp;| <span class="id" title="constructor">Ast.tLambda</span> (<span class="id" title="constructor">nNamed</span> <span class="id" title="var">na</span>) <span class="id" title="var">_</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="constructor">tmReturn</span> <span class="id" title="var">na</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="constructor">tmReturn</span> "" <br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="name_of" class="idref" href="#name_of"><span class="id" title="abbreviation">name_of</span></a> <span class="id" title="var">n</span> := (<span class="id" title="keyword">ltac</span>:(<span class="id" title="keyword">let</span> <span class="id" title="var">k</span> <span class="id" title="var">x</span> := <span class="id" title="tactic">exact</span> <span class="id" title="var">x</span> <span class="id" title="tactic">in</span> <span class="id" title="var">run_template_program</span> (<a class="idref" href="MetaCoq.Translations.param_all.html#getName"><span class="id" title="definition">getName</span></a> (<span class="id" title="keyword">fun</span> <a id="n:16" class="idref" href="#n:16"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> =&gt; 0)) <span class="id" title="var">k</span>)).<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::'Derive'_'Translations'_'for'_x" class="idref" href="#:::'Derive'_'Translations'_'for'_x"><span class="id" title="notation">&quot;</span></a>'Derive' 'Translations' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_all.html#translateAll"><span class="id" title="definition">translateAll</span></a> <span class="id" title="var">T</span>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::'Derive'_'pruned'_'Parametricity'_'for'_x" class="idref" href="#:::'Derive'_'pruned'_'Parametricity'_'for'_x"><span class="id" title="notation">&quot;</span></a>'Derive' 'pruned' 'Parametricity' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_unary.html#persistentTranslate_prune"><span class="id" title="definition">persistentTranslate_prune</span></a> <span class="id" title="var">T</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::'Derive'_'full'_'Parametricity'_'for'_x" class="idref" href="#:::'Derive'_'full'_'Parametricity'_'for'_x"><span class="id" title="notation">&quot;</span></a>'Derive' 'full' 'Parametricity' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_unary.html#persistentTranslate_prune"><span class="id" title="definition">persistentTranslate_prune</span></a> <span class="id" title="var">T</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::'Derive'_'existential'_'Parametricity'_'for'_x" class="idref" href="#:::'Derive'_'existential'_'Parametricity'_'for'_x"><span class="id" title="notation">&quot;</span></a>'Derive' 'existential' 'Parametricity' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <span class="id" title="var">T</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+<span class="id" title="keyword">Notation</span> <a id="d0a01b67716d0ee310f23bb31331e118" class="idref" href="#d0a01b67716d0ee310f23bb31331e118"><span class="id" title="notation">&quot;</span></a>'Derive' '∃∃' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <span class="id" title="var">T</span>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+<span class="id" title="keyword">Notation</span> <a id="50deae1fb84e6129dd650d44fc513cb9" class="idref" href="#50deae1fb84e6129dd650d44fc513cb9"><span class="id" title="notation">&quot;</span></a>'Derive' '∀∀' 'for' T" := (<a class="idref" href="MetaCoq.Translations.param_unary.html#persistentTranslate_prune"><span class="id" title="definition">persistentTranslate_prune</span></a> <span class="id" title="var">T</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>)(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 8).<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

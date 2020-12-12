@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+</div>
+
+<div class="doc">
+ 
+<div class="paragraph"> </div>
+
+<a id="lab3"></a><h1 class="section">makeFresh: Replaces identifiers in inductive types with fresh names</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">MetaCoq.Template</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">utils</span> <span class="id" title="library">All</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="mkFreshName" class="idref" href="#mkFreshName"><span class="id" title="definition">mkFreshName</span></a> (<a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a>:<span class="id" title="inductive">name</span>) : <span class="id" title="inductive">TemplateMonad</span> <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#n:1"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="constructor">nAnon</span> =&gt; <span class="id" title="constructor">tmReturn</span> <span class="id" title="constructor">nAnon</span><br/>
+&nbsp;&nbsp;| <span class="id" title="constructor">nNamed</span> <span class="id" title="var">m</span> =&gt; <a id="m':3" class="idref" href="#m':3"><span class="id" title="binder">m'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmFreshName</span> <span class="id" title="var">m</span><span class="id" title="notation">;;</span> <span class="id" title="constructor">tmReturn</span> (<span class="id" title="constructor">nNamed</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#m':3"><span class="id" title="variable">m'</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc">
+replaces the name in a declaration 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="mkFreshContextDecl" class="idref" href="#mkFreshContextDecl"><span class="id" title="definition">mkFreshContextDecl</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a>:<span class="id" title="record">context_decl</span>) : <span class="id" title="inductive">TemplateMonad</span> <span class="id" title="record">context_decl</span> :=<br/>
+&nbsp;&nbsp;<a id="name':5" class="idref" href="#name':5"><span class="id" title="binder">name'</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#mkFreshName"><span class="id" title="definition">mkFreshName</span></a> (<span class="id" title="projection">decl_name</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:4"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<span class="id" title="constructor">tmReturn</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">decl_name</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#name':5"><span class="id" title="variable">name'</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">decl_body</span> := <span class="id" title="projection">decl_body</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:4"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">decl_type</span> := <span class="id" title="projection">decl_type</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:4"><span class="id" title="variable">x</span></a><br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="mkFreshOneInd" class="idref" href="#mkFreshOneInd"><span class="id" title="definition">mkFreshOneInd</span></a> (<a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a>:<span class="id" title="record">one_inductive_body</span>) : <span class="id" title="inductive">TemplateMonad</span> <span class="id" title="record">one_inductive_body</span> :=<br/>
+&nbsp;&nbsp;<a id="ident':7" class="idref" href="#ident':7"><span class="id" title="binder">ident'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmFreshName</span> (<span class="id" title="projection">ind_name</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:6"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<a id="ctors':13" class="idref" href="#ctors':13"><span class="id" title="binder">ctors'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="definition">monad_map</span> (<span class="id" title="keyword">fun</span> <a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">'(</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">id</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">,</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">t</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">,</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">n</span></a><a id="pat:11" class="idref" href="#pat:11"><span class="id" title="binder">)</span></a> =&gt; <a id="id':12" class="idref" href="#id':12"><span class="id" title="binder">id'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmFreshName</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#id:10"><span class="id" title="variable">id</span></a><span class="id" title="notation">;;</span><span class="id" title="constructor">tmReturn</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">((</span></a><a class="idref" href="MetaCoq.Translations.makeFresh.html#id':12"><span class="id" title="variable">id'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="MetaCoq.Translations.makeFresh.html#t:9"><span class="id" title="variable">t</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">),</span></a><a class="idref" href="MetaCoq.Translations.makeFresh.html#n:8"><span class="id" title="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) (<span class="id" title="projection">ind_ctors</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:6"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<a id="projs':18" class="idref" href="#projs':18"><span class="id" title="binder">projs'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="definition">monad_map</span> (<span class="id" title="keyword">fun</span> <a id="pat:16" class="idref" href="#pat:16"><span class="id" title="binder">'(</span></a><a id="pat:16" class="idref" href="#pat:16"><span class="id" title="binder">id</span></a><a id="pat:16" class="idref" href="#pat:16"><span class="id" title="binder">,</span></a><a id="pat:16" class="idref" href="#pat:16"><span class="id" title="binder">t</span></a><a id="pat:16" class="idref" href="#pat:16"><span class="id" title="binder">)</span></a> =&gt; <a id="id':17" class="idref" href="#id':17"><span class="id" title="binder">id'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="constructor">tmFreshName</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#id:15"><span class="id" title="variable">id</span></a><span class="id" title="notation">;;</span><span class="id" title="constructor">tmReturn</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="MetaCoq.Translations.makeFresh.html#id':17"><span class="id" title="variable">id'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="MetaCoq.Translations.makeFresh.html#t:14"><span class="id" title="variable">t</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) (<span class="id" title="projection">ind_projs</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:6"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<span class="id" title="constructor">tmReturn</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_name</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#ident':7"><span class="id" title="variable">ident'</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_type</span> := <span class="id" title="projection">ind_type</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:6"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_kelim</span> := <span class="id" title="projection">ind_kelim</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:6"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_ctors</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#ctors':13"><span class="id" title="variable">ctors'</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_projs</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#projs':18"><span class="id" title="variable">projs'</span></a><br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="mkFreshMutual" class="idref" href="#mkFreshMutual"><span class="id" title="definition">mkFreshMutual</span></a> (<a id="x:19" class="idref" href="#x:19"><span class="id" title="binder">x</span></a>:<span class="id" title="record">mutual_inductive_body</span>) : <span class="id" title="inductive">TemplateMonad</span> <span class="id" title="record">mutual_inductive_body</span> :=<br/>
+&nbsp;&nbsp;<a id="param':20" class="idref" href="#param':20"><span class="id" title="binder">param'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="definition">monad_map</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#mkFreshContextDecl"><span class="id" title="definition">mkFreshContextDecl</span></a> (<span class="id" title="projection">ind_params</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<a id="bodies':21" class="idref" href="#bodies':21"><span class="id" title="binder">bodies'</span></a> <span class="id" title="notation">&lt;-</span> <span class="id" title="definition">monad_map</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#mkFreshOneInd"><span class="id" title="definition">mkFreshOneInd</span></a> (<span class="id" title="projection">ind_bodies</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">;;</span><br/>
+&nbsp;&nbsp;<span class="id" title="constructor">tmReturn</span><br/>
+&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_finite</span> := <span class="id" title="projection">ind_finite</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_npars</span> := <span class="id" title="projection">ind_npars</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_params</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#param':20"><span class="id" title="variable">param'</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_bodies</span> := <a class="idref" href="MetaCoq.Translations.makeFresh.html#bodies':21"><span class="id" title="variable">bodies'</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_universes</span> := <span class="id" title="projection">ind_universes</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">ind_variance</span> := <span class="id" title="projection">ind_variance</span> <a class="idref" href="MetaCoq.Translations.makeFresh.html#x:19"><span class="id" title="variable">x</span></a><br/>
+&nbsp;&nbsp;|}.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

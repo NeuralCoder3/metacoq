@@ -1,0 +1,230 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+</div>
+
+<div class="doc">
+ 
+<div class="paragraph"> </div>
+
+<a id="lab2"></a><h1 class="section">de_bruijn_print: Pretty print for terms with bruijn indices</h1>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+For a complete pretty print with names
+unquote and use Coqs Print Command
+
+<div class="paragraph"> </div>
+
+It is useful as debugging if a term does not type
+
+<div class="paragraph"> </div>
+
+There is the pure pretty print function but
+this function uses too little parenthesis 
+and does not print tRels and tInd in a useful way
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">MetaCoq.Template.All</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">List</span> <span class="id" title="var">String</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Ascii</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Program</span> <span class="id" title="var">Arith</span> <span class="id" title="var">Lia</span> <span class="id" title="var">PeanoNat</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">ListNotations</span> <span class="id" title="var">MonadNotation</span> <span class="id" title="var">Nat</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">ascii_to_string</span> (<span class="id" title="var">a</span>:<span class="id" title="var">ascii</span>) : <span class="id" title="var">string</span> := <span class="id" title="var">String</span> <span class="id" title="var">a</span> (<span class="id" title="var">EmptyString</span>).<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">natToChar</span> (<span class="id" title="var">n</span>:<span class="id" title="var">nat</span>) : <span class="id" title="var">ascii</span> := <span class="id" title="var">ascii_of_nat</span>(48+<span class="id" title="var">n</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+could use string_of_nat 
+</div>
+<div class="code">
+<span class="id" title="keyword">Program Fixpoint</span> <span class="id" title="var">natToString</span> (<span class="id" title="var">n</span>:<span class="id" title="var">nat</span>) {<span class="id" title="keyword">measure</span> <span class="id" title="var">n</span>} : <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">leb</span> <span class="id" title="var">n</span> 9 <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">true</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ascii_to_string</span> (<span class="id" title="var">natToChar</span> <span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">false</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">append</span> (<span class="id" title="var">natToString</span> (<span class="id" title="var">Nat.div</span> <span class="id" title="var">n</span> 10)) (<span class="id" title="var">ascii_to_string</span>(<span class="id" title="var">natToChar</span>(<span class="id" title="var">Nat.modulo</span> <span class="id" title="var">n</span> 10)))<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">symmetry</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heq_anonymous</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">leb_complete_conv</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heq_anonymous</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<span class="id" title="var">divmod_spec</span> <span class="id" title="var">n</span> 9 0 9).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">divmod</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span>;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span>. <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Infix</span> &quot;:s" := <span class="id" title="var">String</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 73).<br/>
+</div>
+
+<div class="doc">
+normally ^ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Infix</span> &quot;+s" := <span class="id" title="var">append</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 72).<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">linebreak</span> := <span class="id" title="var">ascii_to_string</span>(<span class="id" title="var">ascii_of_nat</span> 10).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">join</span> (<span class="id" title="var">xs</span>:<span class="id" title="var">list</span> <span class="id" title="var">string</span>) : <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">fold_left</span> <span class="id" title="var">append</span> <span class="id" title="var">xs</span> <span class="id" title="var">EmptyString</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">String</span>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">string_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+needed for mutual inductive types 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">getInductiveName</span> (<span class="id" title="var">ind</span>:<span class="id" title="var">kername</span>) (<span class="id" title="var">indIndex</span>:<span class="id" title="var">nat</span>) :<span class="id" title="var">TemplateMonad</span> <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ind</span> &lt;- <span class="id" title="var">tmQuoteInductive</span> <span class="id" title="var">ind</span>;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">tmEval</span> <span class="id" title="tactic">lazy</span> <span class="id" title="keyword">match</span> <span class="id" title="var">nth_error</span> (<span class="id" title="var">ind</span>).(<span class="id" title="var">ind_bodies</span>) <span class="id" title="var">indIndex</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; ""<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">b</span> =&gt; <span class="id" title="var">b</span>.(<span class="id" title="var">ind_name</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">getConstructName</span> (<span class="id" title="var">ind</span>:<span class="id" title="var">kername</span>) (<span class="id" title="var">indIndex</span>:<span class="id" title="var">nat</span>) (<span class="id" title="var">consIndex</span>:<span class="id" title="var">nat</span>) :<span class="id" title="var">TemplateMonad</span> <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ind</span> &lt;- <span class="id" title="var">tmQuoteInductive</span> <span class="id" title="var">ind</span>;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">tmEval</span> <span class="id" title="tactic">lazy</span> <span class="id" title="keyword">match</span> <span class="id" title="var">nth_error</span> (<span class="id" title="var">ind</span>).(<span class="id" title="var">ind_bodies</span>) <span class="id" title="var">indIndex</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; ""<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">b</span> =&gt; <span class="id" title="keyword">match</span> <span class="id" title="var">nth_error</span> <span class="id" title="var">b</span>.(<span class="id" title="var">ind_ctors</span>) <span class="id" title="var">consIndex</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">None</span> =&gt; ""<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> (<span class="id" title="var">s</span>,<span class="id" title="var">_</span>,<span class="id" title="var">_</span>) =&gt; <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">nameToString</span> (<span class="id" title="var">s</span>:<span class="id" title="var">name</span>) : <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">s</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">nAnon</span> =&gt; "_"<br/>
+&nbsp;&nbsp;| <span class="id" title="var">nNamed</span> <span class="id" title="var">s</span> =&gt; <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">concatString</span> (<span class="id" title="var">xs</span>:<span class="id" title="var">list</span> <span class="id" title="var">string</span>) : <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">fold_left</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span> =&gt; <span class="id" title="var">a</span> +<span class="id" title="var">s</span> <span class="id" title="var">b</span>) <span class="id" title="var">xs</span> "".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+auxiliary function to generate the tring 
+</div>
+<div class="code">
+<span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">bruijn_print_aux</span> (<span class="id" title="var">t</span>:<span class="id" title="var">term</span>) : <span class="id" title="var">TemplateMonad</span> <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">t</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">tRel</span> <span class="id" title="var">n</span> =&gt; <span class="id" title="var">tmReturn</span>("R" :<span class="id" title="var">s</span> (<span class="id" title="var">natToString</span> <span class="id" title="var">n</span>))<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tVar</span> <span class="id" title="var">ident</span> =&gt; <span class="id" title="var">tmReturn</span>(<span class="id" title="var">ident</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tEvar</span> <span class="id" title="var">n</span> <span class="id" title="var">xs</span> =&gt; <span class="id" title="var">tmReturn</span> "TODO:EVAR"<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tSort</span> <span class="id" title="var">univ</span> =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span> "tSort ?"<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tProd</span> <span class="id" title="var">n</span> <span class="id" title="var">t</span> <span class="id" title="var">t2</span> =&gt; <span class="id" title="keyword">match</span> <span class="id" title="var">n</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">nAnon</span> =&gt; <span class="id" title="var">s1</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s2</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t2</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>("(":<span class="id" title="var">s</span> <span class="id" title="var">append</span> <span class="id" title="var">s1</span> (<span class="id" title="var">append</span> ") -&gt; " <span class="id" title="var">s2</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">nNamed</span> <span class="id" title="var">s</span> =&gt; <span class="id" title="var">s1</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s2</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t2</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>("∀ (" +<span class="id" title="var">s</span> <span class="id" title="var">s</span> +<span class="id" title="var">s</span> (" : "+<span class="id" title="var">s</span> <span class="id" title="var">s1</span>) +<span class="id" title="var">s</span> "), " +<span class="id" title="var">s</span> <span class="id" title="var">s2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">tLambda</span> <span class="id" title="var">s</span> <span class="id" title="var">t</span> <span class="id" title="var">t2</span> =&gt; <span class="id" title="var">s1</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s2</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t2</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>("λ ("+<span class="id" title="var">s</span> <span class="id" title="keyword">match</span> <span class="id" title="var">s</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">nAnon</span> =&gt; "_"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">nNamed</span> <span class="id" title="var">s</span> =&gt; <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+<span class="id" title="var">s</span> " : "+<span class="id" title="var">s</span> <span class="id" title="var">s1</span>+<span class="id" title="var">s</span>"). "+<span class="id" title="var">s</span> <span class="id" title="var">s2</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tLetIn</span> <span class="id" title="var">name</span> <span class="id" title="var">t1</span> <span class="id" title="var">t2</span> <span class="id" title="var">t3</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s1</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t1</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s2</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t2</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s3</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t3</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>("let "+<span class="id" title="var">s</span> (<span class="id" title="var">nameToString</span> <span class="id" title="var">name</span>) +<span class="id" title="var">s</span> " := "+<span class="id" title="var">s</span> <span class="id" title="var">s1</span> +<span class="id" title="var">s</span> " : " +<span class="id" title="var">s</span> <span class="id" title="var">s2</span> +<span class="id" title="var">s</span> " in "+<span class="id" title="var">s</span> <span class="id" title="var">linebreak</span> +<span class="id" title="var">s</span> <span class="id" title="var">s3</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tApp</span> <span class="id" title="var">t1</span> <span class="id" title="var">t2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s1</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t1</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">s2</span> &lt;- <span class="id" title="var">monad_fold_left</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">s</span> <span class="id" title="var">t</span> =&gt; <span class="id" title="var">s2</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<span class="id" title="var">tmReturn</span> (<span class="id" title="var">s</span> +<span class="id" title="var">s</span> <span class="id" title="var">s2</span> +<span class="id" title="var">s</span> ";")) <span class="id" title="var">t2</span> "";;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>("((" +<span class="id" title="var">s</span> <span class="id" title="var">s1</span> +<span class="id" title="var">s</span> ") [" +<span class="id" title="var">s</span> <span class="id" title="var">s2</span> +<span class="id" title="var">s</span> "])")<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tConst</span> <span class="id" title="var">kn</span> <span class="id" title="var">ui</span> =&gt; <span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>,<span class="id" title="var">name</span>) := <span class="id" title="var">kn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">tmReturn</span> <span class="id" title="var">name</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">tInd</span> <span class="id" title="var">ind</span> <span class="id" title="var">ui</span> =&gt; <span class="id" title="var">getInductiveName</span> <span class="id" title="var">ind</span>.(<span class="id" title="var">inductive_mind</span>) <span class="id" title="var">ind</span>.(<span class="id" title="var">inductive_ind</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tConstruct</span> <span class="id" title="var">ind</span> <span class="id" title="var">n</span> <span class="id" title="var">ui</span> =&gt; <span class="id" title="var">getConstructName</span> <span class="id" title="var">ind</span>.(<span class="id" title="var">inductive_mind</span>) <span class="id" title="var">ind</span>.(<span class="id" title="var">inductive_ind</span>) <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">tCase</span> (<span class="id" title="var">ind</span>,<span class="id" title="var">n</span>) <span class="id" title="var">p</span> <span class="id" title="var">c</span> <span class="id" title="var">brs</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sc</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">c</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sp</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">p</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sb</span> &lt;- <span class="id" title="var">fold_left</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">sa</span> <span class="id" title="var">x</span> =&gt; <span class="id" title="keyword">match</span> <span class="id" title="var">x</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">n</span>,<span class="id" title="var">t</span>) =&gt; <span class="id" title="var">st</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<span class="id" title="var">sb</span> &lt;- <span class="id" title="var">sa</span>;;<span class="id" title="var">tmReturn</span> (<span class="id" title="var">sb</span> +<span class="id" title="var">s</span> " | ("+<span class="id" title="var">s</span>(<span class="id" title="var">natToString</span> <span class="id" title="var">n</span>)+<span class="id" title="var">s</span>") " +<span class="id" title="var">s</span> <span class="id" title="var">st</span> +<span class="id" title="var">s</span> <span class="id" title="var">linebreak</span>) <span class="id" title="keyword">end</span>) <span class="id" title="var">brs</span> (<span class="id" title="var">tmReturn</span> "");;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span>(<span class="id" title="var">linebreak</span> +<span class="id" title="var">s</span> "match (P:" +<span class="id" title="var">s</span> (<span class="id" title="var">natToString</span> <span class="id" title="var">n</span>) +<span class="id" title="var">s</span> ") "+<span class="id" title="var">s</span> <span class="id" title="var">sc</span> +<span class="id" title="var">s</span> " return " +<span class="id" title="var">s</span> <span class="id" title="var">sp</span> +<span class="id" title="var">s</span> " with" +<span class="id" title="var">s</span> <span class="id" title="var">linebreak</span> +<span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sb</span> +<span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"end")<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tProj</span> <span class="id" title="var">p</span> <span class="id" title="var">t</span> =&gt; <span class="id" title="var">tmReturn</span> "TODO:Proj"<br/>
+&nbsp;&nbsp;| <span class="id" title="var">tFix</span> <span class="id" title="var">mf</span> <span class="id" title="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fix</span> <span class="id" title="var">f</span> <span class="id" title="var">xs</span> := <span class="id" title="keyword">match</span> <span class="id" title="var">xs</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">nil</span> =&gt; <span class="id" title="var">tmReturn</span> ""<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">mfb</span>::<span class="id" title="var">xs</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sr</span> &lt;- <span class="id" title="var">f</span> <span class="id" title="var">xs</span>;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">stype</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> (<span class="id" title="var">mfb</span>.(<span class="id" title="var">dtype</span>));;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sbody</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> (<span class="id" title="var">mfb</span>.(<span class="id" title="var">dbody</span>));;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">tmReturn</span> (<span class="id" title="var">linebreak</span> +<span class="id" title="var">s</span> "(fix "+<span class="id" title="var">s</span> (<span class="id" title="var">nameToString</span> <span class="id" title="var">mfb</span>.(<span class="id" title="var">dname</span>)) +<span class="id" title="var">s</span> " : " +<span class="id" title="var">s</span> <span class="id" title="var">stype</span> +<span class="id" title="var">s</span> " := " +<span class="id" title="var">s</span> <span class="id" title="var">linebreak</span> +<span class="id" title="var">s</span> <span class="id" title="var">sbody</span> +<span class="id" title="var">s</span> ") "+<span class="id" title="var">s</span> <span class="id" title="var">sr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;) <span class="id" title="var">mf</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="var">tmReturn</span> "TODO"<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+evalute and print, it is important to use lazy evaluation 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">bruijn_print</span> (<span class="id" title="var">t</span>:<span class="id" title="var">term</span>) : <span class="id" title="var">TemplateMonad</span> <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">s</span> &lt;- <span class="id" title="var">bruijn_print_aux</span> <span class="id" title="var">t</span>;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">val</span> &lt;- <span class="id" title="var">tmEval</span> <span class="id" title="tactic">lazy</span> <span class="id" title="var">s</span>;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">tmMsg</span> <span class="id" title="var">val</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

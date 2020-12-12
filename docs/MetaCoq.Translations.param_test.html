@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+</div>
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+<a id="lab12"></a><h1 class="section">param_test: tests for unary parametricity translation</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Load</span> <span class="id" title="var">param_unary</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f" class="idref" href="#f"><span class="id" title="definition">f</span></a> := <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <span class="id" title="library">f</span><span class="id" title="library">)</span>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#2781f74317a569d79de1a999fbcbc0a5"><span class="id" title="definition">f</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#2781f74317a569d79de1a999fbcbc0a5"><span class="id" title="definition">ᵗ</span></a>.<br/>
+</div>
+
+<div class="doc">
+fun f : Type -&gt; Type =&gt; forall H : Type, (H -&gt; Type) -&gt; f H -&gt; Type 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> <span class="id" title="library">(</span><span class="id" title="library">persistentTranslate</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#abecefeea988f6b54a784bb05fc65569"><span class="id" title="inductive">nat</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#abecefeea988f6b54a784bb05fc65569"><span class="id" title="inductive">ᵗ</span></a>.<br/>
+<span class="id" title="var">MetaCoq</span> <a id="default_term" class="idref" href="#default_term"><span class="id" title="definition">Run</span></a> <a id="default_term" class="idref" href="#default_term"><span class="id" title="definition">(</span></a><a id="default_term" class="idref" href="#default_term"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#8b3942c09883a2ba9f35a48c7c8641a7"><span class="id" title="inductive">nat</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#8b3942c09883a2ba9f35a48c7c8641a7"><span class="id" title="inductive">ᵗ0</span></a>. </div>
+
+<div class="doc">
+makeFresh testing  Inductive natᵗ : (fun X : Set =&gt; X -&gt; Set) nat :=
+	Oᵗ : natᵗ 0
+  | Sᵗ : (fun f : nat -&gt; nat =&gt; forall H : nat, natᵗ H -&gt; natᵗ (f H)) S. 
+  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a id="TC:170" class="idref" href="#TC:170"><span class="id" title="binder">TC</span></a> <span class="id" title="notation">&lt;</span><a id="tsl_ident" class="idref" href="#tsl_ident"><span class="id" title="definition">-</span></a> <a id="tsl_ident" class="idref" href="#tsl_ident"><span class="id" title="definition">Translate</span></a> <a class="idref" href="MetaCoq.Translations.translation_utils.html#emptyTC"><span class="id" title="definition">emptyTC</span></a> "nat" <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_ident_unparam"><span class="id" title="definition">;;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">tmDefinition</span> "nat_TC" <a class="idref" href="MetaCoq.Translations.param_test.html#TC:170"><span class="id" title="variable">TC</span></a> ).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a id="TC:171" class="idref" href="#TC:171"><span class="id" title="binder">TC</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.translation_utils.html#Translate"><span class="id" title="definition">Translate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#nat_TC"><span class="id" title="definition">nat_TC</span></a> "VectorDef.t" <span class="id" title="notation">;;</span></div>
+
+<div class="doc">
+needs nat 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">tmDefinition</span> "vec_TC" <a class="idref" href="MetaCoq.Translations.param_test.html#TC:171"><span class="id" title="variable">TC</span></a> ).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Vectors.VectorDef.html#t"><span class="id" title="inductive">VectorDef.t</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Vectors.VectorDef.html#t"><span class="id" title="inductive">VectorDef.t</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#6bb45647c5ad805268f74657d7c40ad3"><span class="id" title="inductive">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#6bb45647c5ad805268f74657d7c40ad3"><span class="id" title="inductive">ᵗ</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#26832eef9ef96ba1354d75f1fe486fc9"><span class="id" title="inductive">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#26832eef9ef96ba1354d75f1fe486fc9"><span class="id" title="inductive">ᵗ0</span></a>.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Print</span> <span class="id" title="var">t</span>ᵗ1.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+persistent finds the correct translations 
+</div>
+<div class="code">
+<span class="id" title="var">MetaCoq</span> <a id="EnvUp" class="idref" href="#EnvUp"><span class="id" title="definition">Run</span></a> (<a class="idref" href="MetaCoq.Translations.param_test.html#Env"><span class="id" title="definition">persistentTranslate_prune</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Vectors.VectorDef.html#t"><span class="id" title="inductive">VectorDef.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#O"><span class="id" title="constructor">)</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#26832eef9ef96ba1354d75f1fe486fc9"><span class="id" title="inductive">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#26832eef9ef96ba1354d75f1fe486fc9"><span class="id" title="inductive">�</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">�</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#26832eef9ef96ba1354d75f1fe486fc9"><span class="id" title="inductive">0</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#E:3"><span class="id" title="variable">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#9eabad30f79dc50a5112d3a293ed6698"><span class="id" title="inductive">ᵗ1</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Specif.html#sig"><span class="id" title="inductive">sig</span></a>.<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Specif.html#sigT"><span class="id" title="inductive">sigT</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#6424b0520bac4e22195f13c9cf98808b"><span class="id" title="inductive">sigT</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#6424b0520bac4e22195f13c9cf98808b"><span class="id" title="inductive">ᵗ</span></a>.<br/>
+</div>
+
+<div class="doc">
+Inductive
+sigTᵗ (A : Type) (Aᵗ P : A -&gt; Type) (Pᵗ : forall H : A, Aᵗ H -&gt; P H -&gt; Type)
+  : (∑ y, P y) -&gt; Type :=
+	existTᵗ : forall (x : A) (xᵗ : Aᵗ x) (H : P x),
+              Pᵗ x xᵗ H -&gt; sigTᵗ A Aᵗ P Pᵗ (x; H)
+
+<div class="paragraph"> </div>
+
+sigTᵗ is a predicate on sigT proofs:
+take a type A and predicates At on A
+take a predicate for the element P
+and a predicate on Pt proofs of P:
+  on related elements on H (here on elements satisfying At)
+  the proofs have to fulfill Pt
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>.<br/>
+<span class="id" title="constructor">MetaCoq</span> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">Run</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">(</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">list</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#rel:13"><span class="id" title="variable">)</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#d82f7a096a68ce52d5a76df899d9a4cd"><span class="id" title="inductive">list</span></a><span class="id" title="constructor">�</span><a class="idref" href="MetaCoq.Translations.param_test.html#d82f7a096a68ce52d5a76df899d9a4cd"><span class="id" title="inductive">�</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+Inductive listᵗ (A : Type) (Aᵗ : A -&gt; Type) : list A -&gt; Type :=
+	nilᵗ2 : listᵗ A Aᵗ <font size=-2>&#9744;</font>
+  | consᵗ2 : forall H : A,
+             Aᵗ H -&gt;
+             forall H0 : list A, listᵗ A Aᵗ H0 -&gt; listᵗ A Aᵗ (H :: H0)
+
+<div class="paragraph"> </div>
+
+a predicate on lists
+every element in the list fulfills At
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="G" class="idref" href="#G"><span class="id" title="inductive">G</span></a> <a id="X:172" class="idref" href="#X:172"><span class="id" title="binder">X</span></a> <span class="id" title="constructor">:=</span> <a id="C" class="idref" href="#C"><span class="id" title="constructor">C</span></a> (<a id="f:175" class="idref" href="#f:175"><span class="id" title="binder">f</span></a>:<a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#X:172"><span class="id" title="variable">X</span></a>).<br/>
+<span class="id" title="constructor">MetaCoq</span> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">Run</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">(</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">G</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">)</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#28c43d6c69b0e6d9c79071fbc26960f6"><span class="id" title="inductive">G</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#28c43d6c69b0e6d9c79071fbc26960f6"><span class="id" title="inductive">ᵗ</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="type" class="idref" href="#type"><span class="id" title="definition">type</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#x:17"><span class="id" title="variable">:</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">=</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">Type</span></a>.<br/>
+<a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">MetaCoq</span></a> <span class="id" title="var">Run</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">(</span></a><a class="idref" href="MetaCoq.Translations.translation_utils.html#Translate"><span class="id" title="definition">Translate</span></a> <a class="idref" href="MetaCoq.Translations.translation_utils.html#emptyTC"><span class="id" title="definition">emptyTC</span></a> "type").<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#85fe480e9d0753f1d8bad44519fd0582"><span class="id" title="definition">type</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#tsl_rec0_2:15"><span class="id" title="definition">ᵗ</span></a>.<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="MetaCoq.Translations.param_test.html#rel:13"><span class="id" title="variable">(</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#rel:13"><span class="id" title="variable">nat</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#abecefeea988f6b54a784bb05fc65569"><span class="id" title="inductive">ᵗ</span></a>:<a class="idref" href="MetaCoq.Translations.param_test.html#85fe480e9d0753f1d8bad44519fd0582"><span class="id" title="definition">type</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#85fe480e9d0753f1d8bad44519fd0582"><span class="id" title="definition">ᵗ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Print</span> <span class="id" title="var">t</span>ᵗ2.<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Vectors.Fin.html#t"><span class="id" title="inductive">Fin.t</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#e276bc4c960039be5dc788a3e5ecd95b"><span class="id" title="inductive">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#e276bc4c960039be5dc788a3e5ecd95b"><span class="id" title="inductive">ᵗ2</span></a>.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Print</span> <span class="id" title="var">t</span>ᵗ3.<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a id="TC:176" class="idref" href="#TC:176"><span class="id" title="binder">TC</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="MetaCoq.Translations.translation_utils.html#Translate"><span class="id" title="definition">Translate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#nat_TC"><span class="id" title="definition">nat_TC</span></a> "Fin.t" <span class="id" title="library">;;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">tmDefinition</span> "fin_TC" <a class="idref" href="MetaCoq.Translations.param_test.html#TC:176"><span class="id" title="variable">TC</span></a> ).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#aa9b4d74c3167211da04100f61478b68"><span class="id" title="inductive">t</span></a><a class="idref" href="MetaCoq.Translations.param_test.html#aa9b4d74c3167211da04100f61478b68"><span class="id" title="inductive">ᵗ3</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="List" class="idref" href="#List"><span class="id" title="inductive">List</span></a> (<a id="X:177" class="idref" href="#X:177"><span class="id" title="binder">X</span></a>:<span class="id" title="keyword">Set</span>) : <span class="id" title="keyword">Set</span> := <a id="nil" class="idref" href="#nil"><span class="id" title="constructor">nil</span></a> | <a id="cons" class="idref" href="#cons"><span class="id" title="constructor">cons</span></a> (<a id="x:180" class="idref" href="#x:180"><span class="id" title="binder">x</span></a>:<a class="idref" href="MetaCoq.Translations.param_test.html#X:177"><span class="id" title="variable">X</span></a>) (<a id="xs:181" class="idref" href="#xs:181"><span class="id" title="binder">xs</span></a>:<a class="idref" href="MetaCoq.Translations.param_test.html#List:178"><span class="id" title="inductive">List</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#X:177"><span class="id" title="variable">X</span></a>).<br/>
+<span class="id" title="keyword">Inductive</span> <a id="rose" class="idref" href="#rose"><span class="id" title="inductive">rose</span></a> : <span class="id" title="keyword">Set</span> := <a id="node" class="idref" href="#node"><span class="id" title="constructor">node</span></a> (<a id="xs:184" class="idref" href="#xs:184"><span class="id" title="binder">xs</span></a>:<a class="idref" href="MetaCoq.Translations.param_test.html#List"><span class="id" title="inductive">List</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#rose:182"><span class="id" title="inductive">rose</span></a>).<br/>
+
+<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#List"><span class="id" title="inductive">List</span></a>).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_test.html#persistentTranslate"><span class="id" title="definition">persistentTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_test.html#rose"><span class="id" title="inductive">rose</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_test.html#c10434ef5e6ec01bcb4bc0289dff6817"><span class="id" title="inductive">rose</span></a><a id="isAugmentable" class="idref" href="#isAugmentable"><span class="id" title="definition">ᵗ</span></a>.<br/>
+</div>
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+Inductive roseᵗ : rose -&gt; Set :=
+	nodeᵗ : forall xs : List rose, Listᵗ rose roseᵗ xs -&gt; roseᵗ (node xs)
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

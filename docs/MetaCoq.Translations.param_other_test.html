@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+</div>
+
+<div class="doc">
+ 
+<div class="paragraph"> </div>
+
+<a id="lab13"></a><h1 class="section">param_other_test: tests for ∀∃ and ∃∀</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Load</span> <span class="id" title="var">param_other</span>.<br/>
+
+<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#prod"><span class="id" title="inductive">prod</span></a>).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="library">Run</span> (<a class="idref" href="MetaCoq.Translations.param_other_test.html#allExistsParam"><span class="id" title="definition">allExistsParam</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#prod"><span class="id" title="inductive">prod</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_other_test.html#89ad66eef8760829e2750b50df786a79"><span class="id" title="definition">prod</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#89ad66eef8760829e2750b50df786a79"><span class="id" title="definition">ᴬᴱ</span></a>.<br/>
+</div>
+
+<div class="doc">
+prodᴬᴱ = 
+fun (A : Type) (Aᴱ : A -&gt; Type) (B : Type) (Bᴱ : B -&gt; Type) (H : A × B) =&gt;
+prodᴱ A Aᴱ B (fun _ : B =&gt; False) H × prodᴱ A (fun _ : A =&gt; False) B Bᴱ H
+	 : forall A : Type,
+       (A -&gt; Type) -&gt; forall B : Type, (B -&gt; Type) -&gt; A × B -&gt; Type
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="constructor">MetaCoq</span> <span class="id" title="var">Run</span> <span class="id" title="constructor">(</span><span class="id" title="constructor">persistentTranslate_prune</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#prod"><span class="id" title="inductive">prod</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><span class="id" title="constructor">)</span>.<br/>
+<span class="id" title="constructor">MetaCoq</span> <span class="id" title="var">Run</span> <span class="id" title="constructor">(</span><a class="idref" href="MetaCoq.Translations.param_other_test.html#existsAllParam"><span class="id" title="definition">existsAllParam</span></a> <span class="id" title="constructor">prod</span><span class="id" title="constructor">)</span>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_other_test.html#ceaff3864cc0ec48a657d6424c684968"><span class="id" title="definition">prod</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#ceaff3864cc0ec48a657d6424c684968"><span class="id" title="definition">ᴱ�</span></a><span class="id" title="constructor">��</span>.<br/>
+</div>
+
+<div class="doc">
+prodᴱᴬ = 
+fun (A : Type) (Aᴱ : A -&gt; Type) (B : Type) (Bᴱ : B -&gt; Type) (H : A × B) =&gt;
+(prodᵗ A Aᴱ B (fun _ : B =&gt; True) H + prodᵗ A (fun _ : A =&gt; True) B Bᴱ H)
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> <a class="idref" href="MetaCoq.Translations.param_other_test.html#xs:7"><span class="id" title="variable">(</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#xs:7"><span class="id" title="variable">persistentExistsTranslate</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_other_test.html#allExistsParam"><span class="id" title="definition">allExistsParam</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#splitList:8"><span class="id" title="definition">)</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_other_test.html#276047be37af1f7eeee27ae355443de2"><span class="id" title="definition">list</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#276047be37af1f7eeee27ae355443de2"><span class="id" title="definition">ᴬᴱ</span></a>.<br/>
+</div>
+
+<div class="doc">
+listᴬᴱ = 
+fun (A : Type) (Aᴱ : A -&gt; Type) (H : list A) =&gt; listᴱ A Aᴱ H
+	 : forall A : Type, (A -&gt; Type) -&gt; list A -&gt; Type
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="PNT" class="idref" href="#PNT"><span class="id" title="record">PNT</span></a> (<a id="n:80" class="idref" href="#n:80"><span class="id" title="binder">n</span></a><span class="id" title="constructor">:</span><span class="id" title="constructor">nat</span>) (<a id="X:81" class="idref" href="#X:81"><span class="id" title="binder">X</span></a>:<a class="idref" href="MetaCoq.Translations.param_other_test.html#xs:15"><span class="id" title="variable">Type</span></a>) (<a id="d:82" class="idref" href="#d:82"><span class="id" title="binder">d</span></a>:<a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="definition">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <a class="idref" href="MetaCoq.Translations.param_other_test.html#PNT"><span class="id" title="record">PNT</span></a>).<br/>
+<span class="id" title="var">MetaCoq</span> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_other_test.html#allExistsParam"><span class="id" title="definition">allExistsParam</span></a> <a class="idref" href="MetaCoq.Translations.param_other_test.html#PNT"><span class="id" title="record">PNT</span></a>).<br/>
+<span class="id" title="keyword">Print</span> <a class="idref" href="MetaCoq.Translations.param_other_test.html#1c731148d92f03f529c8f9214d9736ca"><span class="id" title="definition">PNT</span></a><a class="idref" href="MetaCoq.Translations.param_other_test.html#1c731148d92f03f529c8f9214d9736ca"><span class="id" title="definition">ᴬᴱ</span></a>.<br/>
+</div>
+
+<div class="doc">
+ITᴬᴱ = 
+fun (X : Type) (Xᴱ : X -&gt; Type) (H : Type) (H0 : IT X H) =&gt; ITᴱ X Xᴱ H H0
+	 : forall X : Type, (X -&gt; Type) -&gt; forall H : Type, IT X H -&gt; Prop
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="IT" class="idref" href="#IT"><span class="id" title="inductive">IT</span></a> (<a id="X:84" class="idref" href="#X:84"><span class="id" title="binder">X</span></a>:<span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span><a id="dummyApply" class="idref" href="#dummyApply"><span class="id" title="definition">:=</span></a>.<br/>
+<a id="dummyApply" class="idref" href="#dummyApply"><span class="id" title="definition">MetaCoq</span></a> <span class="id" title="var">Run</span> <span class="id" title="inductive">(</span><a class="idref" href="MetaCoq.Translations.param_exists.html#persistentExistsTranslate"><span class="id" title="definition">persistentExistsTranslate</span></a> <a id="paramExtCount:19" class="idref" href="#paramExtCount:19"><span class="id" title="binder">IT</span></a><a id="paramExtCount:19" class="idref" href="#paramExtCount:19"><span class="id" title="binder">)</span></a>.<br/>
+<a id="indCount:20" class="idref" href="#indCount:20"><span class="id" title="binder">MetaCoq</span></a> <span class="id" title="var">Run</span> (<a class="idref" href="MetaCoq.Translations.param_other_test.html#allExistsParam"><span class="id" title="definition">allExistsParam</span></a> <a class="idref" href="MetaCoq.Translations.param_other_test.html#IT"><span class="id" title="inductive">IT</span></a><span class="id" title="inductive">)</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="inductive">IT</span><span class="id" title="inductive">�</span><a class="idref" href="MetaCoq.Translations.param_other_test.html#1d4a03b7623025c9b033a414c3408668"><span class="id" title="definition">�ᴱ</span></a>.<br/>
+</div>
+
+<div class="doc">
+ITᴬᴱ = 
+fun (X : Type) (Xᴱ : X -&gt; Type) (H : Type) (H0 : IT X H) =&gt; ITᴱ X Xᴱ H H0
+	 : forall X : Type, (X -&gt; Type) -&gt; forall H : Type, IT X H -&gt; Prop
+
+</div>
+<div class="code">
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
