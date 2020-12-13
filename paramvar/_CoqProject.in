@@ -1,0 +1,21 @@
+-R . MetaCoq.Translations
+
+COQDOCFLAGS = "--charset utf-8 -s --with-header ./website/resources/header.html --with-footer ./website/resources/footer.html --index indexpage"
+
+debug.v
+de_bruijn_print.v
+makeFresh.v
+
+translation_utils.v
+param_unary.v
+param_exists.v
+param_other.v
+param_all.v
+
+
+param_comp.v
+param_eq.v
+param_exists_test.v
+param_test.v
+param_other_test.v
+showcase.v
