@@ -42,7 +42,13 @@ All four statements were developed, defined and implemented as a plugin using Me
 
 ## Compilation
 
-TODO: write the procedure here
+ocaml-variants.4.09.1+flambda is needed with Coq coq-metacoq 1.0~beta1+8.12,
+coq 8.12.0, coq-equations 1.2.3+8.12.
+
+Please follow the instructions under [https://acp_20.discourse.ps.uni-saarland.de/t/coq-installation/18](https://acp_20.discourse.ps.uni-saarland.de/t/coq-installation/18).
+The additional libraries like smpl, quickchick and vst are not needed.
+
+Execute make inside the paramvar directory.
 
 ## Demo file
 
