@@ -51,7 +51,7 @@ The demo file is locates
 ## Documentation
 
 An online documentation containing the comments for all files
-can be found under [TODO:](TODO:).
+can be found under [https://neuralcoder3.github.io/metacoq/toc.html](https://neuralcoder3.github.io/metacoq/toc.html).
 
 ## Files
 
@@ -82,4 +82,3 @@ The code is available on [github](https://github.com/NeuralCoder3/metacoq/tree/u
 
 Extensive comments are in the files.
 
-## References
