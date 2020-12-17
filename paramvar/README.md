@@ -52,7 +52,7 @@ Execute make inside the paramvar directory.
 
 ## Demo file
 
-The demo file is locates
+The demo file is located in `showcase.v`.
 
 ## Documentation
 
