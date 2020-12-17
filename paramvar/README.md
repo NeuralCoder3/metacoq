@@ -48,7 +48,9 @@ coq 8.12.0, coq-equations 1.2.3+8.12.
 Please follow the instructions under [https://acp_20.discourse.ps.uni-saarland.de/t/coq-installation/18](https://acp_20.discourse.ps.uni-saarland.de/t/coq-installation/18).
 The additional libraries like smpl, quickchick and vst are not needed.
 
-Execute make inside the paramvar directory.
+Run `./configure local` followed by `make` and `make checker`
+in metacoq/.
+Then execute make inside the paramvar directory.
 
 ## Demo file
 
